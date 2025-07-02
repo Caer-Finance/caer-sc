@@ -8,4 +8,5 @@ interface IFactory {
     function isHealthy() external view returns (address);
     function addTokenDataStream(address _token, address _dataStream) external;
     function createLendingPool(address _collateralToken, address _borrowToken, uint256 _ltv) external;
+    function protocol() external view returns (address);
 }

@@ -58,6 +58,9 @@ contract LendingPoolFactory {
     
     /// @notice The address of the lending pool deployer contract
     address public lendingPoolDeployer;
+
+    /// @notice The address of the protocol contract
+    address public protocol;
     
     /// @notice Mapping from chain ID to basic token sender address
     mapping(uint256 => address) public basicTokenSender;
@@ -76,10 +79,11 @@ contract LendingPoolFactory {
      * @param _isHealthy The address of the IsHealthy contract
      * @param _lendingPoolDeployer The address of the lending pool deployer contract
      */
-    constructor(address _isHealthy, address _lendingPoolDeployer) {
+    constructor(address _isHealthy, address _lendingPoolDeployer, address _protocol) {
         owner = msg.sender;
         isHealthy = _isHealthy;
         lendingPoolDeployer = _lendingPoolDeployer;
+        protocol = _protocol;
     }
 
     /**

@@ -2,18 +2,19 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {IERC20} from "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
-import {LendingPoolDeployer} from "../src/LendingPoolDeployer.sol";
-import {LendingPoolFactory} from "../src/LendingPoolFactory.sol";
-import {LendingPool} from "../src/LendingPool.sol";
-import {Position} from "../src/Position.sol";
-import {MockUSDC} from "../src/mocks/MockUSDC.sol";
-import {MockUSDT} from "../src/mocks/MockUSDT.sol";
-import {MockWBTC} from "../src/mocks/MockWBTC.sol";
-import {MockWETH} from "../src/mocks/MockWETH.sol";
-import {MockWAVAX} from "../src/mocks/MockWAVAX.sol";
-import {Helper} from "../src/Helper.sol";
-import {IsHealthy} from "../src/IsHealthy.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {LendingPoolDeployer} from "../../src/ccip/LendingPoolDeployer.sol";
+import {LendingPoolFactory} from "../../src/ccip/LendingPoolFactory.sol";
+import {LendingPool} from "../../src/ccip/LendingPool.sol";
+import {Position} from "../../src/ccip/Position.sol";
+import {MockUSDC} from "../../src/ccip/mocks/MockUSDC.sol";
+import {MockUSDT} from "../../src/ccip/mocks/MockUSDT.sol";
+import {MockWBTC} from "../../src/ccip/mocks/MockWBTC.sol";
+import {MockWETH} from "../../src/ccip/mocks/MockWETH.sol";
+import {MockWAVAX} from "../../src/ccip/mocks/MockWAVAX.sol";
+import {Helper} from "../../src/ccip/Helper.sol";
+import {IsHealthy} from "../../src/ccip/IsHealthy.sol";
+import {Protocol} from "../../src/ccip/Protocol.sol";
 
 contract LendingPoolFactoryTest is Test {
     IsHealthy public isHealthy;
@@ -26,6 +27,7 @@ contract LendingPoolFactoryTest is Test {
     MockWETH public weth;
     MockUSDT public usdt;
     MockWAVAX public wavax;
+    Protocol public protocol;
 
     address public owner = makeAddr("owner");
 
@@ -64,8 +66,9 @@ contract LendingPoolFactoryTest is Test {
         vm.createSelectFork("https://api.avax-test.network/ext/bc/C/rpc");
 
         isHealthy = new IsHealthy();
+        protocol = new Protocol(address(alice));
         lendingPoolDeployer = new LendingPoolDeployer(address(alice));
-        lendingPoolFactory = new LendingPoolFactory(address(isHealthy), address(lendingPoolDeployer));
+        lendingPoolFactory = new LendingPoolFactory(address(isHealthy), address(lendingPoolDeployer), address(protocol));
         lendingPool = new LendingPool(address(weth), address(usdc), address(lendingPoolFactory), 7e17);
         position = new Position(address(weth), address(usdc), address(lendingPool), address(lendingPoolFactory));
 
@@ -167,6 +170,7 @@ contract LendingPoolFactoryTest is Test {
         emit LendingPool.BorrowDebtCrosschain(bob, borrowed, borrowed, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
 
         // Bob borrows USDC
+        uint256 protocolFee = (borrowed * 1e15) / 1e18;
         lendingPool.borrowDebt(borrowed, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
 
         // Record Bob's balances after
@@ -175,7 +179,7 @@ contract LendingPoolFactoryTest is Test {
         vm.stopPrank();
 
         // Assert Bob's balances changed as expected
-        assertEq(tempBobBalanceUSDC2 - tempBobBalanceUSDC, borrowed, "Bob should receive borrowed USDC");
+        assertEq(tempBobBalanceUSDC2 - tempBobBalanceUSDC, borrowed - protocolFee, "Bob should receive borrowed USDC");
         assertEq(tempBobBalanceWETH - lended, tempBobBalanceWETH2, "Bob's WETH should decrease by lended amount");
 
         // Assert LendingPool state
@@ -619,5 +623,12 @@ contract LendingPoolFactoryTest is Test {
         lendingPool.swapTokenByPosition(address(weth), address(wbtc), 0.1e18);
         assertEq(IERC20(address(weth)).balanceOf(lendingPool.addressPositions(bob)), 9.9e18);
         vm.stopPrank();
+    }
+
+    function test_counting_interest_rate() public {
+        helper_supply_borrow();
+        vm.warp(block.timestamp + 365 days);
+        lendingPool.accrueInterest();
+        assertEq(lendingPool.totalSupplyAssets(), 1050e6);
     }
 }

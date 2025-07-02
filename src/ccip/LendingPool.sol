@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Position} from "./Position.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IPosition} from "./interfaces/IPosition.sol";
@@ -50,6 +50,7 @@ contract LendingPool is ReentrancyGuard, Helper {
     uint256 public lastAccrued;
     uint256 public ltv;
 
+
     constructor(address _collateralToken, address _borrowToken, address _factory, uint256 _ltv) {
         collateralToken = _collateralToken;
         borrowToken = _borrowToken;
@@ -94,7 +95,7 @@ contract LendingPool is ReentrancyGuard, Helper {
      */
     function supplyLiquidity(uint256 amount) public nonReentrant {
         if (amount == 0) revert ZeroAmount();
-        _accrueInterest();
+        accrueInterest();
         uint256 shares = 0;
         if (totalSupplyAssets == 0) {
             shares = amount;
@@ -124,7 +125,7 @@ contract LendingPool is ReentrancyGuard, Helper {
         if (_shares == 0) revert ZeroAmount();
         if (_shares > userSupplyShares[msg.sender]) revert InsufficientShares();
 
-        _accrueInterest();
+        accrueInterest();
 
         uint256 amount = ((_shares * totalSupplyAssets) / totalSupplyShares);
 
@@ -145,7 +146,7 @@ contract LendingPool is ReentrancyGuard, Helper {
      * @notice Internal function to calculate and apply accrued interest to the protocol.
      * @dev Uses a fixed borrow rate of 10% per year. Updates total supply and borrow assets and last accrued timestamp.
      */
-    function _accrueInterest() internal {
+    function accrueInterest() public {
         uint256 borrowRate = 10;
         uint256 interestPerYear = (totalBorrowAssets * borrowRate) / 100;
         uint256 elapsedTime = block.timestamp - lastAccrued;
@@ -164,7 +165,7 @@ contract LendingPool is ReentrancyGuard, Helper {
      */
     function supplyCollateral(uint256 amount) public positionRequired nonReentrant {
         if (amount == 0) revert ZeroAmount();
-        _accrueInterest();
+        accrueInterest();
         IERC20(collateralToken).safeTransferFrom(msg.sender, addressPositions[msg.sender], amount);
 
         emit SupplyCollateral(msg.sender, amount);
@@ -180,7 +181,7 @@ contract LendingPool is ReentrancyGuard, Helper {
     function withdrawCollateral(uint256 amount) public positionRequired nonReentrant {
         if (amount == 0) revert ZeroAmount();
         if (amount > IERC20(collateralToken).balanceOf(addressPositions[msg.sender])) revert InsufficientCollateral();
-        _accrueInterest();
+        accrueInterest();
         address isHealthy = IFactory(factory).isHealthy();
         IPosition(addressPositions[msg.sender]).withdrawCollateral(amount, msg.sender);
         if (userBorrowShares[msg.sender] > 0) {
@@ -206,7 +207,7 @@ contract LendingPool is ReentrancyGuard, Helper {
      * @custom:emits BorrowDebtCrosschain when borrow is successful.
      */
     function borrowDebt(uint256 amount, uint256 _chainId, SupportedNetworks destination) public nonReentrant {
-        _accrueInterest();
+        accrueInterest();
         uint256 shares = 0;
         if (totalBorrowShares == 0) {
             shares = amount;
@@ -216,7 +217,11 @@ contract LendingPool is ReentrancyGuard, Helper {
         userBorrowShares[msg.sender] += shares;
         totalBorrowShares += shares;
         totalBorrowAssets += amount;
-        // TODO: uncomment this when we have a way to get the price of the collateral token and position token
+
+        uint256 protocolFee = (amount * 1e15) / 1e18; // 0.1%
+        uint256 userAmount = amount - protocolFee;
+        address protocol = IFactory(factory).protocol();
+
         if (totalBorrowAssets > totalSupplyAssets) {
             revert InsufficientLiquidity();
         }
@@ -239,8 +244,10 @@ contract LendingPool is ReentrancyGuard, Helper {
             IBasicTokenSender(basicTokenSenderAddress).send(
                 destinationChainId, msg.sender, tokens, IBasicTokenSender.PayFeesIn.LINK
             );
+            IERC20(borrowToken).safeTransfer(protocol, protocolFee);
         } else {
-            IERC20(borrowToken).safeTransfer(msg.sender, amount);
+            IERC20(borrowToken).safeTransfer(msg.sender, userAmount);
+            IERC20(borrowToken).safeTransfer(protocol, protocolFee);
         }
         emit BorrowDebtCrosschain(msg.sender, amount, shares, _chainId, destination);
     }
@@ -263,7 +270,7 @@ contract LendingPool is ReentrancyGuard, Helper {
         if (shares == 0) revert ZeroAmount();
         if (shares > userBorrowShares[msg.sender]) revert amountSharesInvalid();
 
-        _accrueInterest();
+        accrueInterest();
         uint256 borrowAmount = ((shares * totalBorrowAssets) / totalBorrowShares);
         userBorrowShares[msg.sender] -= shares;
         totalBorrowShares -= shares;
@@ -296,7 +303,7 @@ contract LendingPool is ReentrancyGuard, Helper {
         if (_tokenFrom != collateralToken && IPosition(addressPositions[msg.sender]).tokenListsId(_tokenFrom) == 0) {
             revert TokenNotAvailable();
         }
-        _accrueInterest();
+        accrueInterest();
         amountOut = IPosition(addressPositions[msg.sender]).swapTokenByPosition(_tokenFrom, _tokenTo, amountIn);
     }
 }
