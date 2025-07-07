@@ -3,3 +3,4 @@
 @chainlink-evm/=lib/chainlink/
 @chainlink-ccip/=lib/chainlink-ccip/
 forge-std/=lib/forge-std/src/
+@hyperlane-xyz/=lib/hyperlane-monorepo/solidity/contracts/
