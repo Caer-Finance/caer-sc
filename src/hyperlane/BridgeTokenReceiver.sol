@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
-import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
-import {IInterchainSecurityModule} from "@hyperlane-xyz/interfaces/IInterchainSecurityModule.sol";
-import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
-// import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
-import {IWrappedToken} from "./interfaces/IWrappedToken.sol";
+// import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
+// import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
+// import {IInterchainSecurityModule} from "@hyperlane-xyz/interfaces/IInterchainSecurityModule.sol";
+// import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
+
+import {IMessageRecipient} from "../../lib/hyperlane-monorepo/solidity/contracts/interfaces/IMessageRecipient.sol";
+import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
 
 contract BridgeTokenReceiver is IMessageRecipient {
+    error NotMailbox();
+
     event ReceivedMessage(uint32 origin, bytes32 sender, bytes message);
 
     address public mailbox;
@@ -20,16 +23,14 @@ contract BridgeTokenReceiver is IMessageRecipient {
     }
 
     modifier onlyMailbox() {
-        require(msg.sender == address(mailbox), "MailboxClient: sender not mailbox");
+        if (msg.sender != address(mailbox)) revert NotMailbox();
         _;
     }
 
     // Fungsi ini dipanggil oleh Hyperlane saat pesan datang
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _messageBody) external override onlyMailbox {
         (address recipient, uint256 amount) = abi.decode(_messageBody, (address, uint256));
-        // Mint wrapped token
-        // ITokenSwap(token).mintMock(recipient, amount);
-        IWrappedToken(token).mint(recipient, amount);
+        ITokenSwap(token).mint(recipient, amount);
         emit ReceivedMessage(_origin, _sender, _messageBody);
     }
 }

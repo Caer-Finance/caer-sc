@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Script, console} from "forge-std/Script.sol";
+// import {Script} from "forge-std/src/Script.sol";
+// import {console} from "forge-std/src/console.sol";
+import {Script} from "../lib/forge-std/src/Script.sol";
+import {console} from "../lib/forge-std/src/console.sol";
 import {BridgeTokenReceiver} from "../src/hyperlane/BridgeTokenReceiver.sol";
 import {WrappedToken} from "../src/hyperlane/WrappedToken.sol";
+import {ITokenSwap} from "../src/hyperlane/interfaces/ITokenSwap.sol";
 
 contract BridgeTokenReceiverScript is Script {
     BridgeTokenReceiver public bridgeTokenReceiver;
     WrappedToken public wrappedToken;
 
     address public constant BASE_SEPOLIA_MAILBOX = 0x6966b0E55883d49BFB24539356a2f8A673E02039;
-    // address public constant BASE_SEPOLIA_TOKEN_USDC = 0x99B8B801Fb0f371d2B4D426a72bd019b00D6F2d0;
+    address public constant BASE_SEPOLIA_TOKEN_USDC = 0x99B8B801Fb0f371d2B4D426a72bd019b00D6F2d0;
     uint32 public constant BASE_SEPOLIA_DOMAIN = 84532;
 
     function setUp() public {
@@ -23,12 +27,14 @@ contract BridgeTokenReceiverScript is Script {
         vm.startBroadcast(privateKey);
 
         // Deploy Mailbox
-        address mailbox = BASE_SEPOLIA_MAILBOX;
-        // bridgeTokenReceiver = new BridgeTokenReceiver(mailbox, BASE_SEPOLIA_TOKEN_USDC);
-        wrappedToken = new WrappedToken("Wrapped USDC", "WUSDC");
-        bridgeTokenReceiver = new BridgeTokenReceiver(mailbox, address(wrappedToken));
+        bridgeTokenReceiver = new BridgeTokenReceiver(BASE_SEPOLIA_MAILBOX, BASE_SEPOLIA_TOKEN_USDC);
+        ITokenSwap(BASE_SEPOLIA_TOKEN_USDC).grantMintAndBurnRoles(address(bridgeTokenReceiver));
+
+        // wrappedToken = new WrappedToken("Wrapped USDC", "WUSDC");
+        // bridgeTokenReceiver = new BridgeTokenReceiver(BASE_SEPOLIA_MAILBOX, address(wrappedToken));
 
         console.log("BridgeTokenReceiver deployed at", address(bridgeTokenReceiver));
+
         vm.stopBroadcast();
     }
 

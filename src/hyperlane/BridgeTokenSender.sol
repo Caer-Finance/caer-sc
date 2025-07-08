@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
+// import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
+// import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
+
+import {IMailbox} from "../../lib/hyperlane-monorepo/solidity/contracts/interfaces/IMailbox.sol";
+import {IInterchainGasPaymaster} from "../../lib/hyperlane-monorepo/solidity/contracts/interfaces/IInterchainGasPaymaster.sol";
+import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract BridgeTokenSender {
     address public mailbox;
@@ -41,11 +45,5 @@ contract BridgeTokenSender {
         bytes32 messageId = IMailbox(mailbox).dispatch{value: gasAmount}(destinationDomain, recipientAddress, message);
         return messageId;
 
-        // IInterchainGasPaymaster(interchainGasPaymaster).payForGas{value: gasAmount}(
-        //     messageId,
-        //     destinationDomain,
-        //     gasAmount,
-        //     msg.sender
-        // );
     }
 }

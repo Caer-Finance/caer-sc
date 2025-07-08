@@ -1,27 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
+// import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+// import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+// import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {SafeERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "../../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import {IChainLink} from "./interfaces/IChainLink.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
+import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
 
 /**
  * @title Position
  * @author Caer Protocol
  * @notice A contract that manages lending positions with collateral and borrow assets
  * @dev This contract handles position management, token swapping, and collateral operations
- * 
+ *
  * The Position contract represents a user's lending position in the Caer protocol.
  * It manages collateral assets, borrow assets, and provides functionality for:
  * - Withdrawing collateral
  * - Swapping tokens within the position
  * - Repaying loans with selected tokens
  * - Calculating token values and exchange rates
- * 
+ *
  * Key features:
  * - Reentrancy protection for secure operations
  * - Dynamic token list management
@@ -60,13 +64,13 @@ contract Position is ReentrancyGuard {
     /// @notice Emitted when a position is liquidated
     /// @param user The address of the user whose position was liquidated
     event Liquidate(address user);
-    
+
     /// @notice Emitted when tokens are swapped within the position
     /// @param user The address of the user performing the swap
     /// @param token The address of the token being swapped
     /// @param amount The amount of tokens being swapped
     event SwapToken(address user, address token, uint256 amount);
-    
+
     /// @notice Emitted when tokens are swapped by the position contract
     /// @param user The address of the user initiating the swap
     /// @param tokenIn The address of the input token
@@ -74,7 +78,7 @@ contract Position is ReentrancyGuard {
     /// @param amountIn The amount of input tokens
     /// @param amountOut The amount of output tokens received
     event SwapTokenByPosition(address user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut);
-    
+
     /// @notice Emitted when collateral is withdrawn from the position
     /// @param user The address of the user withdrawing collateral
     /// @param amount The amount of collateral withdrawn

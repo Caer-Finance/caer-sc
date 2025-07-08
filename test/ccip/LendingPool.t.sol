@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {Test, console} from "forge-std/Test.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import {Test, console} from "forge-std/Test.sol";
+// import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Test, console} from "../../lib/forge-std/src/Test.sol";
+import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {LendingPoolDeployer} from "../../src/ccip/LendingPoolDeployer.sol";
 import {LendingPoolFactory} from "../../src/ccip/LendingPoolFactory.sol";
 import {LendingPool} from "../../src/ccip/LendingPool.sol";
