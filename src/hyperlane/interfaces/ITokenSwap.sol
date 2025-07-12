@@ -7,4 +7,6 @@ interface ITokenSwap {
     function grantMintAndBurnRoles(address _to) external;
     function mintMock(address _to, uint256 _amount) external;
     function burnMock(uint256 _amount) external;
+    function bridgeTokenSenders(uint32 _chainId) external view returns (address[] memory);
+    function addBridgeTokenSender(address _bridgeTokenSender) external;
 }

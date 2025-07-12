@@ -14,5 +14,10 @@ docs/
 .env
 
 /src/layerzero/
+/src/hyperlane/learn-hyperlane/
 
 /test/layerzero/
+
+/script/BridgeTokenReceiver.s.sol
+/script/BridgeTokenSender.s.sol
+/script/Shortcut_Bridge.s.sol

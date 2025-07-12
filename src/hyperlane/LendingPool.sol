@@ -5,18 +5,20 @@ pragma solidity ^0.8.13;
 // import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 // import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 // import {Client} from "@chainlink-ccip/chains/evm/contracts/libraries/Client.sol";
+// import {Client} from "../../lib/chainlink-ccip/chains/evm/contracts/libraries/Client.sol";
+// import {IBasicTokenSender} from "./interfaces/IBasicTokenSender.sol";
 
 import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "../../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
-import {Client} from "../../lib/chainlink-ccip/chains/evm/contracts/libraries/Client.sol";
 
 import {Position} from "./Position.sol";
+import {Helper} from "./Helper.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IPosition} from "./interfaces/IPosition.sol";
-import {IBasicTokenSender} from "./interfaces/IBasicTokenSender.sol";
-import {Helper} from "./Helper.sol";
 import {IIsHealthy} from "./interfaces/IIsHealthy.sol";
+import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
+import {ICaerBasicTokenSender} from "./interfaces/ICaerBasicTokenSender.sol";
 
 contract LendingPool is ReentrancyGuard, Helper {
     using SafeERC20 for IERC20;
@@ -37,7 +39,7 @@ contract LendingPool is ReentrancyGuard, Helper {
     event RepayWithCollateralByPosition(address user, uint256 amount, uint256 shares);
     event CreatePosition(address user, address positionAddress);
     event BorrowDebtCrosschain(
-        address user, uint256 amount, uint256 shares, uint256 chainId, SupportedNetworks destination
+        address user, uint256 amount, uint256 shares, uint256 chainId, uint256 bridgeTokenSender
     );
 
     uint256 public totalSupplyAssets;
@@ -207,11 +209,11 @@ contract LendingPool is ReentrancyGuard, Helper {
      * @dev Calculates shares, checks liquidity, and handles cross-chain or local transfers. Accrues interest before borrowing.
      * @param amount The amount of tokens to borrow.
      * @param _chainId The chain id of the destination network.
-     * @param destination The destination network for crosschain borrow.
+     * @param _bridgeTokenSender The bridge token sender for crosschain borrow.
      * @custom:throws InsufficientLiquidity if protocol lacks liquidity.
      * @custom:emits BorrowDebtCrosschain when borrow is successful.
      */
-    function borrowDebt(uint256 amount, uint256 _chainId, SupportedNetworks destination) public nonReentrant {
+    function borrowDebt(uint256 amount, uint32 _chainId, uint256 _bridgeTokenSender) public nonReentrant {
         accrueInterest();
         uint256 shares = 0;
         if (totalBorrowShares == 0) {
@@ -240,21 +242,27 @@ contract LendingPool is ReentrancyGuard, Helper {
             totalBorrowShares,
             userBorrowShares[msg.sender]
         );
-        if (destination != SupportedNetworks.AVALANCHE_FUJI) {
-            address basicTokenSenderAddress = IFactory(factory).basicTokenSender(_chainId);
-            IERC20(borrowToken).approve(basicTokenSenderAddress, amount);
-            (,,, uint64 destinationChainId) = getConfigFromNetwork(destination);
-            Client.EVMTokenAmount[] memory tokens = new Client.EVMTokenAmount[](1);
-            tokens[0] = Client.EVMTokenAmount(borrowToken, amount);
-            IBasicTokenSender(basicTokenSenderAddress).send(
-                destinationChainId, msg.sender, tokens, IBasicTokenSender.PayFeesIn.LINK
-            );
+        // if (destination != SupportedNetworks.AVALANCHE_FUJI) {
+        if (_chainId != uint32(block.chainid)) {
+            // address basicTokenSenderAddress = IFactory(factory).basicTokenSender(_chainId);
+            // IERC20(borrowToken).approve(basicTokenSenderAddress, amount);
+            // (,,, uint64 destinationChainId) = getConfigFromNetwork(destination);
+            // Client.EVMTokenAmount[] memory tokens = new Client.EVMTokenAmount[](1);
+            // tokens[0] = Client.EVMTokenAmount(borrowToken, amount);
+            // IBasicTokenSender(basicTokenSenderAddress).send(
+            //     destinationChainId, msg.sender, tokens, IBasicTokenSender.PayFeesIn.LINK
+            // );
+            // IERC20(borrowToken).safeTransfer(protocol, protocolFee);
+
+            address[] memory bridgeTokenSenders = ITokenSwap(borrowToken).bridgeTokenSenders(_chainId);
+            IERC20(borrowToken).approve(bridgeTokenSenders[_bridgeTokenSender], userAmount);
+            ICaerBasicTokenSender(bridgeTokenSenders[_bridgeTokenSender]).bridge(userAmount, msg.sender, borrowToken);
             IERC20(borrowToken).safeTransfer(protocol, protocolFee);
         } else {
             IERC20(borrowToken).safeTransfer(msg.sender, userAmount);
             IERC20(borrowToken).safeTransfer(protocol, protocolFee);
         }
-        emit BorrowDebtCrosschain(msg.sender, amount, shares, _chainId, destination);
+        emit BorrowDebtCrosschain(msg.sender, amount, shares, _chainId, _bridgeTokenSender);
     }
 
     /**

@@ -82,11 +82,12 @@ contract LendingPoolFactory {
      * @param _isHealthy The address of the IsHealthy contract
      * @param _lendingPoolDeployer The address of the lending pool deployer contract
      */
-    constructor(address _isHealthy, address _lendingPoolDeployer, address _protocol) {
+    constructor(address _isHealthy, address _lendingPoolDeployer, address _protocol, address _helper) {
         owner = msg.sender;
         isHealthy = _isHealthy;
         lendingPoolDeployer = _lendingPoolDeployer;
         protocol = _protocol;
+        helper = _helper;
     }
 
     /**

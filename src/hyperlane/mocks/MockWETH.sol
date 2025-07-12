@@ -5,10 +5,15 @@ pragma solidity ^0.8.24;
 // import {IGetCCIPAdmin} from "@chainlink-ccip/chains/evm/contracts/interfaces/IGetCCIPAdmin.sol";
 import {BurnMintERC677} from "../../../lib/chainlink-evm/contracts/src/v0.8/shared/token/ERC677/BurnMintERC677.sol";
 import {IGetCCIPAdmin} from "../../../lib/chainlink-ccip/chains/evm/contracts/interfaces/IGetCCIPAdmin.sol";
+import {ICaerBasicTokenSender} from "../interfaces/ICaerBasicTokenSender.sol";
 
 contract MockWETH is BurnMintERC677, IGetCCIPAdmin {
+    error InvalidChainId();
+
     address public helperTestnet;
-    address public bridgeTokenSender;
+    mapping(uint32 => address[]) public bridgeTokenSenders;
+
+    event BridgeTokenSenderAdded(address indexed bridgeTokenSender, uint32 indexed chainId);
 
     constructor(address _helperTestnet) BurnMintERC677("Wrapped Ethereum", "WETH", 18, 0) {
         helperTestnet = _helperTestnet;
@@ -28,6 +33,9 @@ contract MockWETH is BurnMintERC677, IGetCCIPAdmin {
     }
 
     function addBridgeTokenSender(address _bridgeTokenSender) public onlyOwner {
-        bridgeTokenSender = _bridgeTokenSender;
+        uint32 _chainId = ICaerBasicTokenSender(_bridgeTokenSender).chainId();
+        if (_chainId == 0) revert InvalidChainId();
+        bridgeTokenSenders[_chainId].push(_bridgeTokenSender);
+        emit BridgeTokenSenderAdded(_bridgeTokenSender, _chainId);
     }
 }
