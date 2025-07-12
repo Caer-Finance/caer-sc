@@ -7,7 +7,12 @@ import {BurnMintERC677} from "../../../lib/chainlink-evm/contracts/src/v0.8/shar
 import {IGetCCIPAdmin} from "../../../lib/chainlink-ccip/chains/evm/contracts/interfaces/IGetCCIPAdmin.sol";
 
 contract MockUSDT is BurnMintERC677, IGetCCIPAdmin {
-    constructor() BurnMintERC677("USD Tether", "USDT", 6, 0) {}
+    address public helperTestnet;
+    address public bridgeTokenSender;
+
+    constructor(address _helperTestnet) BurnMintERC677("USD Tether", "USDT", 6, 0) {
+        helperTestnet = _helperTestnet;
+    }
 
     // this function for hackathon purposes
     function mintMock(address to, uint256 amount) public {
@@ -20,5 +25,9 @@ contract MockUSDT is BurnMintERC677, IGetCCIPAdmin {
 
     function getCCIPAdmin() external view override returns (address) {
         return owner();
+    }
+
+    function addBridgeTokenSender(address _bridgeTokenSender) public onlyOwner {
+        bridgeTokenSender = _bridgeTokenSender;
     }
 }

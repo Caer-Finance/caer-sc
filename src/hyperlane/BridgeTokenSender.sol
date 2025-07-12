@@ -44,6 +44,5 @@ contract BridgeTokenSender {
 
         bytes32 messageId = IMailbox(mailbox).dispatch{value: gasAmount}(destinationDomain, recipientAddress, message);
         return messageId;
-
     }
 }

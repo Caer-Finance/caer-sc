@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.13;
+
+import {IBasicTokenSender} from "./IBasicTokenSender.sol";
+
+interface ICaerBasicTokenSender is IBasicTokenSender {
+    function chainId() external view returns (uint32);
+}

@@ -61,6 +61,9 @@ contract LendingPoolFactory {
 
     /// @notice The address of the protocol contract
     address public protocol;
+
+    /// @notice The address of the bridge router contract
+    address public helper;
     
     /// @notice Mapping from chain ID to basic token sender address
     mapping(uint256 => address) public basicTokenSender;

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 // import {Script} from "forge-std/src/Script.sol";
 // import {console} from "forge-std/src/console.sol";
 import {Script} from "../lib/forge-std/src/Script.sol";
-import {console} from "../lib/forge-std/src/console.sol";
+// import {console} from "../lib/forge-std/src/console.sol";
 import {BridgeTokenSender} from "../src/hyperlane/BridgeTokenSender.sol";
 
 contract BridgeTokenSenderScript is Script {
@@ -38,7 +38,7 @@ contract BridgeTokenSenderScript is Script {
             ARB_SEPOLIA_GAS_PARAM
         );
 
-        console.log("BridgeTokenSender deployed at", address(bridgeTokenSender));
+        // console.log("BridgeTokenSender deployed at", address(bridgeTokenSender));
 
         vm.stopBroadcast();
     }
