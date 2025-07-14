@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 
-// import {BurnMintERC677} from "@chainlink-evm/contracts/src/v0.8/shared/token/ERC677/BurnMintERC677.sol";
-// import {IGetCCIPAdmin} from "@chainlink-ccip/chains/evm/contracts/interfaces/IGetCCIPAdmin.sol";
-import {BurnMintERC677} from "../../../lib/chainlink-evm/contracts/src/v0.8/shared/token/ERC677/BurnMintERC677.sol";
-import {IGetCCIPAdmin} from "../../../lib/chainlink-ccip/chains/evm/contracts/interfaces/IGetCCIPAdmin.sol";
-import {ICaerBasicTokenSender} from "../interfaces/ICaerBasicTokenSender.sol";
+import {BurnMintERC677} from "@chainlink-evm/contracts/src/v0.8/shared/token/ERC677/BurnMintERC677.sol";
+import {IGetCCIPAdmin} from "@chainlink-ccip/chains/evm/contracts/interfaces/IGetCCIPAdmin.sol";
+import {ICaerBridgeTokenSender} from "../interfaces/ICaerBridgeTokenSender.sol";
 
 contract MockWBTC is BurnMintERC677, IGetCCIPAdmin {
     error InvalidChainId();
 
     address public helperTestnet;
-    mapping(uint32 => address[]) public bridgeTokenSenders;
+    mapping(uint256 => address[]) public bridgeTokenSenders;
 
-    event BridgeTokenSenderAdded(address indexed bridgeTokenSender, uint32 indexed chainId);
+    event BridgeTokenSenderAdded(address indexed bridgeTokenSender, uint256 indexed chainId);
 
     constructor(address _helperTestnet) BurnMintERC677("Wrapped Bitcoin", "WBTC", 8, 0) {
         helperTestnet = _helperTestnet;
@@ -34,7 +32,7 @@ contract MockWBTC is BurnMintERC677, IGetCCIPAdmin {
 
 
     function addBridgeTokenSender(address _bridgeTokenSender) public onlyOwner {
-        uint32 _chainId = ICaerBasicTokenSender(_bridgeTokenSender).chainId();
+        uint256 _chainId = ICaerBridgeTokenSender(_bridgeTokenSender).chainId();
         if (_chainId == 0) revert InvalidChainId();
         bridgeTokenSenders[_chainId].push(_bridgeTokenSender);
         emit BridgeTokenSenderAdded(_bridgeTokenSender, _chainId);

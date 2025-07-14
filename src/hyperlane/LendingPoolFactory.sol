@@ -126,15 +126,4 @@ contract LendingPoolFactory {
         tokenDataStream[_token] = _dataStream;
         emit TokenDataStreamAdded(_token, _dataStream);
     }
-
-    /**
-     * @notice Adds a basic token sender for cross-chain operations
-     * @param _chainId The chain ID where the token sender operates
-     * @param _basicTokenSender The address of the basic token sender contract
-     * @dev Only callable by the owner. Used for cross-chain token transfers.
-     */
-    function addBasicTokenSender(uint256 _chainId, address _basicTokenSender) public onlyOwner {
-        basicTokenSender[_chainId] = _basicTokenSender;
-        emit BasicTokenSenderAdded(_chainId, _basicTokenSender);
-    }
 }

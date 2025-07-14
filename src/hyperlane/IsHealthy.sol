@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IChainLink} from "./interfaces/IChainLink.sol";
-import {IERC20Metadata} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IPosition} from "./interfaces/IPosition.sol";
 
 /**

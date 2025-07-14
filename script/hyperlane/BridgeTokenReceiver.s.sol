@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// import {Script} from "forge-std/src/Script.sol";
-// import {console} from "forge-std/src/console.sol";
-import {Script} from "../lib/forge-std/src/Script.sol";
-import {console} from "../lib/forge-std/src/console.sol";
-import {BridgeTokenReceiver} from "../src/hyperlane/BridgeTokenReceiver.sol";
-import {WrappedToken} from "../src/hyperlane/WrappedToken.sol";
-import {ITokenSwap} from "../src/hyperlane/interfaces/ITokenSwap.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {BridgeTokenReceiver} from "../../src/hyperlane/learn-hyperlane/BridgeTokenReceiver.sol";
+import {WrappedToken} from "../../src/hyperlane/WrappedToken.sol";
+import {ITokenSwap} from "../../src/hyperlane/interfaces/ITokenSwap.sol";
 
 contract BridgeTokenReceiverScript is Script {
     BridgeTokenReceiver public bridgeTokenReceiver;

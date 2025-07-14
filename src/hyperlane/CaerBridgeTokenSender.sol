@@ -1,15 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
-// import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
-// import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
-// import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import {IMailbox} from "../../lib/hyperlane-monorepo/solidity/contracts/interfaces/IMailbox.sol";
-import {IInterchainGasPaymaster} from
-    "../../lib/hyperlane-monorepo/solidity/contracts/interfaces/IInterchainGasPaymaster.sol";
-import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
+import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
+import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IHelperTestnet} from "./interfaces/IHelperTestnet.sol";
 import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
 
@@ -25,9 +19,9 @@ contract CaerBridgeTokenSender {
     address public interchainGasPaymaster;
     address public token;
     address public receiverBridge; // ** OTHER CHAIN
-    uint32 public chainId; // ** OTHER CHAIN
+    uint256 public chainId; // ** OTHER CHAIN
 
-    constructor(address _helperTestnet, address _token, address _receiverBridge, uint32 _chainId) {
+    constructor(address _helperTestnet, address _token, address _receiverBridge, uint256 _chainId) {
         helperTestnet = _helperTestnet;
         (address _mailbox, address _interchainGasPaymaster,) = IHelperTestnet(helperTestnet).chains(block.chainid);
         mailbox = _mailbox;

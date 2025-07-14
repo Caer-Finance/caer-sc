@@ -13,14 +13,8 @@ contract HelperTestnet {
         uint32 domainId;
     }
 
-    struct TokenInfo {
-        uint256 origin;
-        address token;
-    }
-
     mapping(uint256 => ChainInfo) public chains;
     mapping(uint256 => address) public receiverBridge;
-    mapping(address => TokenInfo[]) public tokenInfo;
 
     address public owner;
 
@@ -179,32 +173,12 @@ contract HelperTestnet {
             ChainInfo(0x589C201a07c26b4725A4A829d772f24423da480B, 0x8584590ad637C61C7cDF72eFF3381Ee1c3D1bC8E, 9496);
     }
 
-    function addChain(address _mailbox, address _gasMaster, uint32 _domainId, uint256 _chainId)
-        public
-        onlyOwner
-    {
+    function addChain(address _mailbox, address _gasMaster, uint32 _domainId, uint256 _chainId) public onlyOwner {
         if (chains[_chainId].mailbox != address(0)) revert ChainAlreadyExists();
         chains[_chainId] = ChainInfo(_mailbox, _gasMaster, _domainId);
     }
 
     function addReceiverBridge(uint256 _chainId, address _receiverBridge) public onlyOwner {
         receiverBridge[_chainId] = _receiverBridge;
-    }
-
-    function addTokenInfo(address _token, uint256 _origin) public onlyOwner {
-        TokenInfo[] storage tokenInfos = tokenInfo[_token];
-        for (uint256 i = 0; i < tokenInfos.length; i++) {
-            if (tokenInfos[i].origin == _origin) revert TokenAlreadyExists();
-        }
-        tokenInfos.push(TokenInfo(_origin, _token));
-    }
-
-    function deleteTokenInfo(address _token, uint256 _origin) public onlyOwner {
-        TokenInfo[] storage tokenInfos = tokenInfo[_token];
-        for (uint256 i = 0; i < tokenInfos.length; i++) {
-            if (tokenInfos[i].origin == _origin) {
-                delete tokenInfos[i];
-            }
-        }
     }
 }

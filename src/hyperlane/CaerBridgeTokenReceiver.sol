@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-// import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
-
-import {IMessageRecipient} from "../../lib/hyperlane-monorepo/solidity/contracts/interfaces/IMessageRecipient.sol";
+import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
 import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
 import {IHelperTestnet} from "./interfaces/IHelperTestnet.sol";
 

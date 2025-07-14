@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// import {Script} from "forge-std/src/Script.sol";
-// import {console} from "forge-std/src/console.sol";
-import {Script} from "../lib/forge-std/src/Script.sol";
-// import {console} from "../lib/forge-std/src/console.sol";
-import {BridgeTokenSender} from "../src/hyperlane/BridgeTokenSender.sol";
+import {Script} from "forge-std/Script.sol";
+import {BridgeTokenSender} from "../../src/hyperlane/learn-hyperlane/BridgeTokenSender.sol";
 
 contract BridgeTokenSenderScript is Script {
     BridgeTokenSender public bridgeTokenSender;

@@ -22,8 +22,8 @@ contract LendingPoolDeployer {
     address public factory;
     address public owner;
 
-    constructor(address _owner) {
-        owner = _owner;
+    constructor() {
+        owner = msg.sender;
     }
 
     modifier onlyFactory() {

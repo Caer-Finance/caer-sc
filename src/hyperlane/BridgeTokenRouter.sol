@@ -1,17 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-// import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
-// import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
-// import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
-// import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import {IMailbox} from "../../lib/hyperlane-monorepo/solidity/contracts/interfaces/IMailbox.sol";
-import {IInterchainGasPaymaster} from
-    "../../lib/hyperlane-monorepo/solidity/contracts/interfaces/IInterchainGasPaymaster.sol";
-import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
+import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
+import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IHelperTestnet} from "./interfaces/IHelperTestnet.sol";
-import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
 
 contract BridgeTokenRouter {
     error NotMailbox();
@@ -30,7 +23,8 @@ contract BridgeTokenRouter {
 
     constructor(address _helperTestnet, address _token) {
         helperTestnet = _helperTestnet;
-        (address _mailbox, address _interchainGasPaymaster,) = IHelperTestnet(helperTestnet).chains(block.chainid);
+        (address _mailbox, address _interchainGasPaymaster,) =
+            IHelperTestnet(helperTestnet).chains(block.chainid);
         if (_mailbox == address(0)) revert MailboxNotSet();
         if (_interchainGasPaymaster == address(0)) revert InterchainGasPaymasterNotSet();
 
@@ -44,11 +38,7 @@ contract BridgeTokenRouter {
         _;
     }
 
-    function bridge(uint256 _amount, address _recipient, uint256 _chainId)
-        external
-        payable
-        returns (bytes32)
-    {
+    function bridge(uint256 _amount, address _recipient, uint256 _chainId) external payable returns (bytes32) {
         if (block.chainid == _chainId) revert SameChain();
 
         (,, uint32 destinationDomain) = IHelperTestnet(helperTestnet).chains(_chainId);

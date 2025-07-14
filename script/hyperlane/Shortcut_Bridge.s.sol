@@ -1,17 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// import {Script, console} from "forge-std/Script.sol";
-// import {IBridgeTokenSender} from "../src/hyperlane/interfaces/IBridgeTokenSender.sol";
-// import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
-// import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
-import {Script} from "../lib/forge-std/src/Script.sol";
-import {console} from "../lib/forge-std/src/console.sol";
-import {IBridgeTokenSender} from "../src/hyperlane/interfaces/IBridgeTokenSender.sol";
-import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {IInterchainGasPaymaster} from
-    "../lib/hyperlane-monorepo/solidity/contracts/interfaces/IInterchainGasPaymaster.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {IBridgeTokenSender} from "../../src/hyperlane/interfaces/IBridgeTokenSender.sol";
+import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
 
 contract ShortcutBridgeScript is Script {
     //******************* Sender Bridge *******************
