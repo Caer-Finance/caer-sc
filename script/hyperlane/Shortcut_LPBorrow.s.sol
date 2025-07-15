@@ -9,6 +9,7 @@ import {Helper} from "./Helper.sol";
 import {ILendingPool} from "../../src/hyperlane/interfaces/ILendingPool.sol";
 import {IHelperTestnet} from "../../src/hyperlane/interfaces/IHelperTestnet.sol";
 import {IFactory} from "../../src/hyperlane/interfaces/IFactory.sol";
+import {ITokenSwap} from "../../src/hyperlane/interfaces/ITokenSwap.sol";
 
 contract LPBorrowScript is Script, Helper {
     // --------- FILL THIS ----------
@@ -62,7 +63,9 @@ contract LPBorrowScript is Script, Helper {
                 // );
                 console.log("gasAmount", gasAmount);
             }
-            ILendingPool(ARB_lp).borrowDebt{value: gasAmount}(amountBorrow, chainId, 0);
+            // ILendingPool(ARB_lp).borrowDebt{value: gasAmount}(amountBorrow, chainId, 0);
+            // ITokenSwap(borrowToken).bridgeTokenSenders(84532);
+            console.log("bridgeTokenSenders", ITokenSwap(borrowToken).bridgeTokenSenders(84532, 0));
 
             console.log("success");
             console.log("Your balance after borrow", IERC20(borrowToken).balanceOf(ARB_lp));

@@ -43,20 +43,20 @@ contract CaerScript is Script {
     address public ARB_UsdcUsd = 0x0153002d20B96532C639313c2d54c3dA09109309;
     address public ARB_UsdtUsd = 0x80EDee6f667eCc9f63a0a6f55578F870651f06A4;
 
-    address public baseHelper = 0xBFBf0284811C6016C7a3D58002c42A331F25c7E9;
-    address public UsdcBridgeTokenReceiver = 0xbCB5804326A1DDe83fFEdE29095837cfDFae66e3;
-    address public UsdtBridgeTokenReceiver = 0x2cDCD2b4AEe98d46bBF95E1e72d42d99D8Ddb334;
-    address public WavaxBridgeTokenReceiver = 0x8C7eBB641777A9B84cEC73b94fa12E9dbE66a4CE;
-    address public BtcBridgeTokenReceiver = 0xEd15F92c4DDc8e88D4d4a25DA8cF01303b4aa289;
-    address public EthBridgeTokenReceiver = 0x4CBE9e7144B58F261f490B0eBEdFf4FDe91Ec369;
-    //   export const BASE_mockWETH =  0x21cF2C6125939e0eCbf750309E32BAB3332240d8 ;
-    //   export const BASE_mockUSDC =  0x86Ed7e036864163A76129C273Aa4DdffcAb4C289 ;
-    //   export const BASE_mockUSDT =  0xF7f49fB0e729EC9dbb735772e81470822B0F3617 ;
-    //   export const BASE_mockWAVAX =  0x9C53C78b369F1E5547888b3be29c9965762DcA52 ;
-    //   export const BASE_mockWBTC =  0x3E33c712c3B259f61c19BE022824c030ed360F2a ;
+    address public baseHelper = 0x9644888dDfa19626350f9Ab7D72025092aead844;
+    address public UsdcBridgeTokenReceiver = 0xe9E12229A1f1ff7B36B5128aCEBcb1A9947A45AB;
+    address public UsdtBridgeTokenReceiver = 0x6b8b6FDC5208c72CC011e8E76C5eD062abDdaF62;
+    address public WavaxBridgeTokenReceiver = 0xFAE5d1499879Aee7EA96e3D8Cd15Bb7a39479D4a;
+    address public BtcBridgeTokenReceiver = 0x1A15C13e64f4Dc2746644E303d230157640E340F;
+    address public EthBridgeTokenReceiver = 0xC4ECE4a5cD5296a884835338d131429445de3bFC;
+    //   export const BASE_mockWETH =  0x70F98aaCEd0f8176efcD5B082f39432793A48912 ;
+    //   export const BASE_mockUSDC =  0xd1f1aF4A99760cB68e436bAb147c4F066E8f6283 ;
+    //   export const BASE_mockUSDT =  0x5e63B7550eC070C46046BdA7Fd26AE795Ae2F368 ;
+    //   export const BASE_mockWAVAX =  0x4740e13b74c7b278A36bb1b8889aB9198e6f4c49 ;
+    //   export const BASE_mockWBTC =  0x77Ce0D597216065133803B651160A2B609829041 ;
 
-    // address public arbHelper;
-    address public arbHelper = 0x15257Ec35D606849D2DBC3ee3D49707D8b61E87D;
+    bool public isDeployed = false;
+    address public arbHelper = isDeployed ? 0x15257Ec35D606849D2DBC3ee3D49707D8b61E87D : address(0);
 
     address public ARB_mockUSDC = 0x2BF6F2726A8fB77033cD5FCd30Bf56836B602a1F;
     address public ARB_mockUSDT = 0xb76612Bf1C76b56f191f28eB7FDd37988d79E6bc;
@@ -64,18 +64,18 @@ contract CaerScript is Script {
     address public ARB_mockWBTC = 0xE430Cfb554d6D9B27E5BcC61FdBEDbDD37749C73;
     address public ARB_mockWETH = 0xC8a00955106fC3cF2D932B4feCF25fa8cdF96174;
 
-    //   address public arbHelper =  0x15257Ec35D606849D2DBC3ee3D49707D8b61E87D ;
-    //   export const mockUSDC =  0x2BF6F2726A8fB77033cD5FCd30Bf56836B602a1F ;
-    //   export const mockUSDT =  0xb76612Bf1C76b56f191f28eB7FDd37988d79E6bc ;
-    //   export const mockWAVAX =  0x7f6F9cca3AE061576091dF5830605E413549402f ;
-    //   export const mockWBTC =  0xE430Cfb554d6D9B27E5BcC61FdBEDbDD37749C73 ;
-    //   export const mockWETH =  0xC8a00955106fC3cF2D932B4feCF25fa8cdF96174 ;
-    //   export const protocol =  0xD8F3efDadFb57E2C2597cAd634DDBf08197a2085 ;
-    //   export const isHealthy =  0xbF5d87C06d9928F7C26F8e2c4389Bc7C9aC87Da4 ;
-    //   export const lendingPoolDeployer =  0x03F296A65d1dD4E009CD8F1b8f1aD2fCc6C876C1 ;
-    //   export const lendingPoolFactory =  0xA610d431d569fd19F725161c7F1C2C0c52Ad06F9 ;
-    //   export const lendingPool =  0xAc98a0f651C4F09e894aBDFCAbB0620895b30cD9 ;
-    //   export const position =  0x0EDc826Bf5aDBD3A54925C34dF268786Ba4481cC ;
+    //   address public arbHelper =  0x7C1A494ED22eAFC04e314c79Fc81AD11386f63a1 ;
+    //   export const mockUSDC =  0xCB1cE7974cb8566711775e1cb2D04FaF1293d082 ;
+    //   export const mockUSDT =  0x4E64400D95663F1900459C3c46f3667C363Ed33b ;
+    //   export const mockWAVAX =  0x33925aE397E2688D92c3fc837c5E015DfA73D996 ;
+    //   export const mockWBTC =  0x6234F07ad85805D01446BB7D8e1f8E5e2018cEB1 ;
+    //   export const mockWETH =  0xAeb1279d0BCa98819bb25D76e54d49c221AB5656 ;
+    //   export const protocol =  0x07695F590c73824f6d8285DAedF8B0C4EfE748cF ;
+    //   export const isHealthy =  0x4DB881b3f4C5e2Fa6e5ad01af5aB3fd942534b9A ;
+    //   export const lendingPoolDeployer =  0xF2Ae7B9a7DB2EF7ed435e6bc1ebC2f3822f4028E ;
+    //   export const lendingPoolFactory =  0xf51d621dD942697E013086ecE5Fb4fe59Aa5512f ;
+    //   export const lendingPool =  0x06Ce4E2c536dDa1fa00c6715411Fb5B319EAA139 ;
+    //   export const position =  0x9F58Fdb2f132c4586DcA6465b9E12140bE67cabE ;
 
     function setUp() public {
         // host chain
@@ -87,7 +87,10 @@ contract CaerScript is Script {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(privateKey);
 
-        // deployMockToken();
+        if (!isDeployed) {
+            deployMockToken();
+        }
+
         if (block.chainid == 84532) {
             console.log("export const BASE_mockWETH = ", address(mockWETH), ";");
             console.log("export const BASE_mockUSDC = ", address(mockUSDC), ";");
@@ -98,30 +101,40 @@ contract CaerScript is Script {
             protocol = new Protocol();
             isHealthy = new IsHealthy();
             lendingPoolDeployer = new LendingPoolDeployer();
-            // lendingPoolFactory = new LendingPoolFactory(
-            //     address(isHealthy), address(lendingPoolDeployer), address(protocol), address(helperTestnet)
-            // );
-            lendingPoolFactory =
-                new LendingPoolFactory(address(isHealthy), address(lendingPoolDeployer), address(protocol), arbHelper);
+            if (!isDeployed) {
+                lendingPoolFactory = new LendingPoolFactory(
+                    address(isHealthy), address(lendingPoolDeployer), address(protocol), address(helperTestnet)
+                );
+            } else {
+                lendingPoolFactory = new LendingPoolFactory(
+                    address(isHealthy), address(lendingPoolDeployer), address(protocol), arbHelper
+                );
+            }
+            if (!isDeployed) {
+                lendingPool = new LendingPool(address(mockWETH), address(mockUSDC), address(lendingPoolFactory), 7e17);
+                position = new Position(
+                    address(mockWETH), address(mockUSDC), address(lendingPool), address(lendingPoolFactory)
+                );
+            } else {
+                lendingPool = new LendingPool(ARB_mockWETH, ARB_mockUSDC, address(lendingPoolFactory), 7e17);
+                position = new Position(ARB_mockWETH, ARB_mockUSDC, address(lendingPool), address(lendingPoolFactory));
+            }
 
-            // lendingPool = new LendingPool(address(mockWETH), address(mockUSDC), address(lendingPoolFactory), 7e17);
-            // position = new Position(address(mockWETH), address(mockUSDC), address(lendingPool), address(lendingPoolFactory));
-
-            lendingPool = new LendingPool(ARB_mockWETH, ARB_mockUSDC, address(lendingPoolFactory), 7e17);
-            position = new Position(ARB_mockWETH, ARB_mockUSDC, address(lendingPool), address(lendingPoolFactory));
             lendingPoolDeployer.setFactory(address(lendingPoolFactory));
 
-            // lendingPoolFactory.addTokenDataStream(address(mockWETH), ARB_EthUsd);
-            // lendingPoolFactory.addTokenDataStream(address(mockWBTC), ARB_BtcUsd);
-            // lendingPoolFactory.addTokenDataStream(address(mockWAVAX), ARB_AvaxUsd);
-            // lendingPoolFactory.addTokenDataStream(address(mockUSDC), ARB_UsdcUsd);
-            // lendingPoolFactory.addTokenDataStream(address(mockUSDT), ARB_UsdtUsd);
-
-            lendingPoolFactory.addTokenDataStream(ARB_mockWETH, ARB_EthUsd);
-            lendingPoolFactory.addTokenDataStream(ARB_mockWBTC, ARB_BtcUsd);
-            lendingPoolFactory.addTokenDataStream(ARB_mockWAVAX, ARB_AvaxUsd);
-            lendingPoolFactory.addTokenDataStream(ARB_mockUSDC, ARB_UsdcUsd);
-            lendingPoolFactory.addTokenDataStream(ARB_mockUSDT, ARB_UsdtUsd);
+            if (!isDeployed) {
+                lendingPoolFactory.addTokenDataStream(address(mockWETH), ARB_EthUsd);
+                lendingPoolFactory.addTokenDataStream(address(mockWBTC), ARB_BtcUsd);
+                lendingPoolFactory.addTokenDataStream(address(mockWAVAX), ARB_AvaxUsd);
+                lendingPoolFactory.addTokenDataStream(address(mockUSDC), ARB_UsdcUsd);
+                lendingPoolFactory.addTokenDataStream(address(mockUSDT), ARB_UsdtUsd);
+            } else {
+                lendingPoolFactory.addTokenDataStream(ARB_mockWETH, ARB_EthUsd);
+                lendingPoolFactory.addTokenDataStream(ARB_mockWBTC, ARB_BtcUsd);
+                lendingPoolFactory.addTokenDataStream(ARB_mockWAVAX, ARB_AvaxUsd);
+                lendingPoolFactory.addTokenDataStream(ARB_mockUSDC, ARB_UsdcUsd);
+                lendingPoolFactory.addTokenDataStream(ARB_mockUSDT, ARB_UsdtUsd);
+            }
 
             console.log("export const protocol = ", address(protocol), ";");
             console.log("export const isHealthy = ", address(isHealthy), ";");

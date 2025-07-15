@@ -10,15 +10,15 @@ contract Helper is Script {
     address public AVAX_WBTC = 0xa7A93C5F0691a5582BAB12C0dE7081C499aECE7f;
     address public AVAX_WAVAX = 0xA61Eb0D33B5d69DC0D0CE25058785796296b1FBd;
 
-    address public ARB_USDC = 0x2BF6F2726A8fB77033cD5FCd30Bf56836B602a1F;
-    address public ARB_USDT = 0xb76612Bf1C76b56f191f28eB7FDd37988d79E6bc;
-    address public ARB_WAVAX = 0x7f6F9cca3AE061576091dF5830605E413549402f;
-    address public ARB_WBTC = 0xE430Cfb554d6D9B27E5BcC61FdBEDbDD37749C73;
-    address public ARB_WETH = 0xC8a00955106fC3cF2D932B4feCF25fa8cdF96174;
+    address public ARB_USDC = 0xCB1cE7974cb8566711775e1cb2D04FaF1293d082;
+    address public ARB_USDT = 0x4E64400D95663F1900459C3c46f3667C363Ed33b;
+    address public ARB_WAVAX = 0x33925aE397E2688D92c3fc837c5E015DfA73D996;
+    address public ARB_WBTC = 0x6234F07ad85805D01446BB7D8e1f8E5e2018cEB1;
+    address public ARB_WETH = 0xAeb1279d0BCa98819bb25D76e54d49c221AB5656;
 
-    address public ARB_deployer = 0x03F296A65d1dD4E009CD8F1b8f1aD2fCc6C876C1;
-    address public ARB_factory = 0xA610d431d569fd19F725161c7F1C2C0c52Ad06F9;
-    address public ARB_lp = 0xAc98a0f651C4F09e894aBDFCAbB0620895b30cD9;
+    address public ARB_deployer = 0xF2Ae7B9a7DB2EF7ed435e6bc1ebC2f3822f4028E;
+    address public ARB_factory = 0xf51d621dD942697E013086ecE5Fb4fe59Aa5512f;
+    address public ARB_lp = 0x06Ce4E2c536dDa1fa00c6715411Fb5B319EAA139;
 
     address public claimAddress = vm.envAddress("ADDRESS");
 

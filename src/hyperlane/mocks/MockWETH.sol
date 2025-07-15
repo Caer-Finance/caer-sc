@@ -36,4 +36,8 @@ contract MockWETH is BurnMintERC677, IGetCCIPAdmin {
         bridgeTokenSenders[_chainId].push(_bridgeTokenSender);
         emit BridgeTokenSenderAdded(_bridgeTokenSender, _chainId);
     }
+
+    function getBridgeTokenSendersLength(uint256 _chainId) external view returns (uint256) {
+        return bridgeTokenSenders[_chainId].length;
+    }
 }

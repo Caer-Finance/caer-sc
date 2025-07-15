@@ -41,12 +41,6 @@ contract LendingPoolFactoryHyperlaneTest is Test {
     address public ArbUsdcUsd = 0x0153002d20B96532C639313c2d54c3dA09109309;
     address public ArbUsdtUsd = 0x80EDee6f667eCc9f63a0a6f55578F870651f06A4;
 
-    address public AvaxBtcUsd = 0x31CF013A08c6Ac228C94551d535d5BAfE19c602a;
-    address public AvaxEthUsd = 0x86d67c3D38D2bCeE722E601025C25a575021c6EA;
-    address public AvaxAvaxUsd = 0x5498BB86BC934c8D34FDA08E81D444153d0D06aD;
-    address public AvaxUsdcUsd = 0x97FE42a7E96640D932bbc0e1580c73E705A8EB73;
-    address public AvaxUsdtUsd = 0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad;
-
     uint256 public chainId = 421614;
 
     bool priceFeedIsActive = false;
@@ -76,11 +70,11 @@ contract LendingPoolFactoryHyperlaneTest is Test {
         lendingPool = new LendingPool(address(weth), address(usdc), address(lendingPoolFactory), 7e17);
         position = new Position(address(weth), address(usdc), address(lendingPool), address(lendingPoolFactory));
 
-        lendingPoolFactory.addTokenDataStream(address(wbtc), AvaxBtcUsd);
-        lendingPoolFactory.addTokenDataStream(address(weth), AvaxEthUsd);
-        lendingPoolFactory.addTokenDataStream(address(wavax), AvaxAvaxUsd);
-        lendingPoolFactory.addTokenDataStream(address(usdc), AvaxUsdcUsd);
-        lendingPoolFactory.addTokenDataStream(address(usdt), AvaxUsdtUsd);
+        lendingPoolFactory.addTokenDataStream(address(wbtc), ArbBtcUsd);
+        lendingPoolFactory.addTokenDataStream(address(weth), ArbEthUsd);
+        lendingPoolFactory.addTokenDataStream(address(wavax), ArbAvaxUsd);
+        lendingPoolFactory.addTokenDataStream(address(usdc), ArbUsdcUsd);
+        lendingPoolFactory.addTokenDataStream(address(usdt), ArbUsdtUsd);
 
         lendingPoolDeployer.setFactory(address(lendingPoolFactory));
         vm.stopPrank();

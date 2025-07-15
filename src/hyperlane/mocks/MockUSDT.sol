@@ -37,4 +37,7 @@ contract MockUSDT is BurnMintERC677, IGetCCIPAdmin {
         emit BridgeTokenSenderAdded(_bridgeTokenSender, _chainId);
     }
 
+    function getBridgeTokenSendersLength(uint256 _chainId) external view returns (uint256) {
+        return bridgeTokenSenders[_chainId].length;
+    }
 }

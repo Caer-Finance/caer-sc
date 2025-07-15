@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import {Script, console} from "forge-std/Script.sol";
 import {Helper} from "./Helper.sol";
 import {IFactory} from "../../src/hyperlane/interfaces/IFactory.sol";
-import {ILPDeployer} from "../../src/hyperlane/interfaces/ILPDeployer.sol";
 
 contract CreateLPScript is Script, Helper {
     // --------- FILL THIS ----------

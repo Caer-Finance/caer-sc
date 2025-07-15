@@ -30,11 +30,14 @@ contract MockWBTC is BurnMintERC677, IGetCCIPAdmin {
         return owner();
     }
 
-
     function addBridgeTokenSender(address _bridgeTokenSender) public onlyOwner {
         uint256 _chainId = ICaerBridgeTokenSender(_bridgeTokenSender).chainId();
         if (_chainId == 0) revert InvalidChainId();
         bridgeTokenSenders[_chainId].push(_bridgeTokenSender);
         emit BridgeTokenSenderAdded(_bridgeTokenSender, _chainId);
+    }
+
+    function getBridgeTokenSendersLength(uint256 _chainId) external view returns (uint256) {
+        return bridgeTokenSenders[_chainId].length;
     }
 }
