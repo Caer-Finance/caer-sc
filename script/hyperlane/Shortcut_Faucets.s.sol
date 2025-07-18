@@ -8,8 +8,8 @@ import {ITokenSwap} from "../../src/hyperlane/interfaces/ITokenSwap.sol";
 
 contract FaucetsScript is Script, Helper {
     // ------- FILL THIS ----------
-    address public claimToken = ARB_WETH;
-    uint256 public amount = 10;
+    address public claimToken = ARB_USDC;
+    uint256 public amount = 10_000;
     // ----------------------------
 
     function setUp() public {

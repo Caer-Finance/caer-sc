@@ -43,39 +43,39 @@ contract CaerScript is Script {
     address public ARB_UsdcUsd = 0x0153002d20B96532C639313c2d54c3dA09109309;
     address public ARB_UsdtUsd = 0x80EDee6f667eCc9f63a0a6f55578F870651f06A4;
 
-    address public baseHelper = 0x9644888dDfa19626350f9Ab7D72025092aead844;
-    address public UsdcBridgeTokenReceiver = 0xe9E12229A1f1ff7B36B5128aCEBcb1A9947A45AB;
-    address public UsdtBridgeTokenReceiver = 0x6b8b6FDC5208c72CC011e8E76C5eD062abDdaF62;
-    address public WavaxBridgeTokenReceiver = 0xFAE5d1499879Aee7EA96e3D8Cd15Bb7a39479D4a;
-    address public BtcBridgeTokenReceiver = 0x1A15C13e64f4Dc2746644E303d230157640E340F;
-    address public EthBridgeTokenReceiver = 0xC4ECE4a5cD5296a884835338d131429445de3bFC;
-    //   export const BASE_mockWETH =  0x70F98aaCEd0f8176efcD5B082f39432793A48912 ;
-    //   export const BASE_mockUSDC =  0xd1f1aF4A99760cB68e436bAb147c4F066E8f6283 ;
-    //   export const BASE_mockUSDT =  0x5e63B7550eC070C46046BdA7Fd26AE795Ae2F368 ;
-    //   export const BASE_mockWAVAX =  0x4740e13b74c7b278A36bb1b8889aB9198e6f4c49 ;
-    //   export const BASE_mockWBTC =  0x77Ce0D597216065133803B651160A2B609829041 ;
+    address public baseHelper = 0xbd69Eab11C7B29c8A562b95DB1fB71544dD936d7;
+    address public UsdcBridgeTokenReceiver = 0x754617432cb207318B8F574F473Fc26954878e29;
+    address public UsdtBridgeTokenReceiver = 0x8af1CEc4b2d4ac81A7A3c7f5CaC0b7073A21867D;
+    address public WavaxBridgeTokenReceiver = 0x16411d3f61Db8B88c7D594f5A9a0C5afa0714d62;
+    address public BtcBridgeTokenReceiver = 0xa99Ee2aDC20A7298CA3a9331FbCc120175C6518e;
+    address public EthBridgeTokenReceiver = 0xfD30B5EF9FE375DD4BC9c2316f4b305a29edA220;
+    //   export const BASE_mockWETH =  0xaA456fa44e9DB055dbD470d7E756B6d9870f10a3 ;
+    //   export const BASE_mockUSDC =  0x8825408311E71cFe36D4c8f9f9d7441f793A09c7 ;
+    //   export const BASE_mockUSDT =  0x248b37ae22Bd3956919a997E17FaecA4B293e4c0 ;
+    //   export const BASE_mockWAVAX =  0x1Ed238fE25137808565070CABC9713827B52636c ;
+    //   export const BASE_mockWBTC =  0x3C095DB25f880380b0B52BDfE6045A4A5D66135F ;
 
     bool public isDeployed = false;
-    address public arbHelper = isDeployed ? 0x15257Ec35D606849D2DBC3ee3D49707D8b61E87D : address(0);
+    address public arbHelper = isDeployed ? 0x8030dA6FBba0B33D4Ce694B19CD1e1eC50C9d916 : address(0);
 
-    address public ARB_mockUSDC = 0x2BF6F2726A8fB77033cD5FCd30Bf56836B602a1F;
-    address public ARB_mockUSDT = 0xb76612Bf1C76b56f191f28eB7FDd37988d79E6bc;
-    address public ARB_mockWAVAX = 0x7f6F9cca3AE061576091dF5830605E413549402f;
-    address public ARB_mockWBTC = 0xE430Cfb554d6D9B27E5BcC61FdBEDbDD37749C73;
-    address public ARB_mockWETH = 0xC8a00955106fC3cF2D932B4feCF25fa8cdF96174;
+    address public ARB_mockUSDC = 0x902bf8CaC2222a8897d07864BEB49C291633B70E;
+    address public ARB_mockUSDT = 0x2315a799b5E50b0454fbcA7237a723df4868F606;
+    address public ARB_mockWAVAX = 0x0a3Fc1B5194B5564987F8062d1C9EC915B5B11d9;
+    address public ARB_mockWBTC = 0xd642a577d77DF95bADE47F6A2329BA9d280400Ea;
+    address public ARB_mockWETH = 0x8acFd502E5D1E3747C17f8c61880be64BABAE2dF;
 
-    //   address public arbHelper =  0x7C1A494ED22eAFC04e314c79Fc81AD11386f63a1 ;
-    //   export const mockUSDC =  0xCB1cE7974cb8566711775e1cb2D04FaF1293d082 ;
-    //   export const mockUSDT =  0x4E64400D95663F1900459C3c46f3667C363Ed33b ;
-    //   export const mockWAVAX =  0x33925aE397E2688D92c3fc837c5E015DfA73D996 ;
-    //   export const mockWBTC =  0x6234F07ad85805D01446BB7D8e1f8E5e2018cEB1 ;
-    //   export const mockWETH =  0xAeb1279d0BCa98819bb25D76e54d49c221AB5656 ;
-    //   export const protocol =  0x07695F590c73824f6d8285DAedF8B0C4EfE748cF ;
-    //   export const isHealthy =  0x4DB881b3f4C5e2Fa6e5ad01af5aB3fd942534b9A ;
-    //   export const lendingPoolDeployer =  0xF2Ae7B9a7DB2EF7ed435e6bc1ebC2f3822f4028E ;
-    //   export const lendingPoolFactory =  0xf51d621dD942697E013086ecE5Fb4fe59Aa5512f ;
-    //   export const lendingPool =  0x06Ce4E2c536dDa1fa00c6715411Fb5B319EAA139 ;
-    //   export const position =  0x9F58Fdb2f132c4586DcA6465b9E12140bE67cabE ;
+    //   address public arbHelper =  0x8030dA6FBba0B33D4Ce694B19CD1e1eC50C9d916 ;
+    //   export const mockUSDC =  0x902bf8CaC2222a8897d07864BEB49C291633B70E ;
+    //   export const mockUSDT =  0x2315a799b5E50b0454fbcA7237a723df4868F606 ;
+    //   export const mockWAVAX =  0x0a3Fc1B5194B5564987F8062d1C9EC915B5B11d9 ;
+    //   export const mockWBTC =  0xd642a577d77DF95bADE47F6A2329BA9d280400Ea ;
+    //   export const mockWETH =  0x8acFd502E5D1E3747C17f8c61880be64BABAE2dF ;
+    //   export const protocol =  0x0c996cBCd0b81bFC20bf54e3bcCE8Ed4A39ac0Fb ;
+    //   export const isHealthy =  0x3e8915376e2afE25915BA66b45AC5df54df61F19 ;
+    //   export const lendingPoolDeployer =  0x722Ca412b27f38157e94AC5332A6D90f5aB7c5EF ;
+    //   export const lendingPoolFactory =  0xB1fa9e45fBd6668d287FcAfE7ed9f37F7F24a8Ed ;
+    //   export const lendingPool =  0x0a97cC170B77362Fd29edC650D0BFf009B7b30eD ;
+    //   export const position =  0x616ea99db493b2200b62f13a15675954C0647C8e ;
 
     function setUp() public {
         // host chain
@@ -241,4 +241,8 @@ contract CaerScript is Script {
 
     // RUN
     // forge script CaerScript --broadcast --verify
+
+    // Deploy token other chain
+    // deploy receiver other chain
+    // Pair bridge source chain
 }

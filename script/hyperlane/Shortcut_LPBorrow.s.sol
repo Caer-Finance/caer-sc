@@ -44,7 +44,7 @@ contract LPBorrowScript is Script, Helper {
             console.log("Your debt amount application", amountBorrow);
             return;
         } else {
-            console.log("Your balance before borrow", lpBorrowBalance);
+            console.log("LP balance before borrow", lpBorrowBalance);
             console.log("borrow token address", borrowToken);
 
             address helperTestnet = IFactory(ARB_factory).helper();
@@ -63,12 +63,12 @@ contract LPBorrowScript is Script, Helper {
                 // );
                 console.log("gasAmount", gasAmount);
             }
-            // ILendingPool(ARB_lp).borrowDebt{value: gasAmount}(amountBorrow, chainId, 0);
+            ILendingPool(ARB_lp).borrowDebt{value: gasAmount}(amountBorrow, chainId, 0);
             // ITokenSwap(borrowToken).bridgeTokenSenders(84532);
-            console.log("bridgeTokenSenders", ITokenSwap(borrowToken).bridgeTokenSenders(84532, 0));
+            // console.log("bridgeTokenSenders", ITokenSwap(borrowToken).bridgeTokenSenders(84532, 0));
 
             console.log("success");
-            console.log("Your balance after borrow", IERC20(borrowToken).balanceOf(ARB_lp));
+            console.log("LP balance after borrow", IERC20(borrowToken).balanceOf(ARB_lp));
         }
         vm.stopBroadcast();
     }
