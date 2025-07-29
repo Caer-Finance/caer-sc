@@ -61,10 +61,14 @@ contract LendingPool is ReentrancyGuard, Helper {
     }
 
     modifier positionRequired() {
+        _positionRequired();
+        _;
+    }
+
+    function _positionRequired() internal {
         if (addressPositions[msg.sender] == address(0)) {
             createPosition();
         }
-        _;
     }
 
     /**

@@ -27,13 +27,21 @@ contract LendingPoolDeployer {
     }
 
     modifier onlyFactory() {
-        if (msg.sender != factory) revert OnlyFactoryCanCall();
+        _onlyFactory();
         _;
     }
 
+    function _onlyFactory() internal view {
+        if (msg.sender != factory) revert OnlyFactoryCanCall();
+    }
+
     modifier onlyOwner() {
-        if (msg.sender != owner) revert OnlyOwnerCanCall();
+        _onlyOwner();
         _;
+    }
+
+    function _onlyOwner() internal view {
+        if (msg.sender != owner) revert OnlyOwnerCanCall();
     }
 
     /**
