@@ -20,7 +20,7 @@ contract LendingPoolFactory {
      * @param ltv The Loan-to-Value ratio for the pool
      */
     event LendingPoolCreated(
-        address indexed collateralToken, address indexed borrowToken, address lendingPool, uint256 ltv
+        address indexed collateralToken, address indexed borrowToken, address indexed lendingPool, uint256 ltv
     );
     
     /**
