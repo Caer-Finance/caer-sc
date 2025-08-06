@@ -6,6 +6,7 @@ import {IERC20Metadata} from "@openzeppelin-contracts/contracts/token/ERC20/exte
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {Helper} from "./Helper.sol";
 import {ILendingPool} from "../src/interfaces/ILendingPool.sol";
+import {ILPRouter} from "../src/interfaces/ILPRouter.sol";
 
 contract LPSupplyCollateralScript is Script, Helper {
     // --------- FILL THIS ----------
@@ -30,7 +31,8 @@ contract LPSupplyCollateralScript is Script, Helper {
     // Make sure you have enough collateral in the wallet
     function run() public {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
-        address collateralToken = ILendingPool(ORIGIN_lendingPool).collateralToken();
+        address LPRouter = ILendingPool(ORIGIN_lendingPool).router();
+        address collateralToken = ILPRouter(LPRouter).collateralToken();
         uint256 decimal = IERC20Metadata(collateralToken).decimals();
 
         vm.startBroadcast(privateKey);

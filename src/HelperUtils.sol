@@ -7,6 +7,7 @@ import {IFactory} from "./interfaces/IFactory.sol";
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IPriceFeed} from "./interfaces/IPriceFeed.sol";
+import {ILPRouter} from "./interfaces/ILPRouter.sol";
 
 contract HelperUtils {
     address public factory;
@@ -37,16 +38,16 @@ contract HelperUtils {
 
     function getMaxBorrowAmount(address _lendingPool, address _user) public view returns (uint256) {
         ILendingPool lendingPool = ILendingPool(_lendingPool);
-        
+
         // Get pool data in one struct
         PoolData memory poolData = PoolData({
-            ltv: lendingPool.ltv(),
-            borrowToken: lendingPool.borrowToken(),
-            collateralToken: lendingPool.collateralToken(),
+            ltv: ILPRouter(lendingPool.router()).ltv(),
+            borrowToken: ILPRouter(lendingPool.router()).borrowToken(),
+            collateralToken: ILPRouter(lendingPool.router()).collateralToken(),
             totalLiquidity: 0, // Will be set below
-            userPosition: lendingPool.addressPositions(_user)
+            userPosition: ILPRouter(lendingPool.router()).addressPositions(_user)
         });
-        
+
         poolData.totalLiquidity = IERC20(poolData.borrowToken).balanceOf(_lendingPool);
 
         // Calculate collateral value
@@ -54,7 +55,7 @@ contract HelperUtils {
 
         // Get borrow data and calculate current borrow amount
         uint256 borrowAmount = _getCurrentBorrowAmount(lendingPool, _user);
-        
+
         // Calculate max borrow amount
         uint256 maxBorrowAmount = ((tokenValue * poolData.ltv) / 1e18) - borrowAmount;
 
@@ -62,30 +63,27 @@ contract HelperUtils {
     }
 
     // Internal function to calculate collateral value
-    function _getCollateralValue(PoolData memory poolData, address /* _user */) internal view returns (uint256) {
+    function _getCollateralValue(PoolData memory poolData, address /* _user */ ) internal view returns (uint256) {
         address _tokenInPrice = IFactory(factory).tokenDataStream(poolData.collateralToken);
         address _tokenOutPrice = IFactory(factory).tokenDataStream(poolData.borrowToken);
         uint256 collateralBalance = IERC20(poolData.collateralToken).balanceOf(poolData.userPosition);
-        
+
         return IPosition(poolData.userPosition).tokenCalculator(
-            poolData.collateralToken, 
-            poolData.borrowToken, 
-            collateralBalance, 
-            _tokenInPrice, 
-            _tokenOutPrice
+            poolData.collateralToken, poolData.borrowToken, collateralBalance, _tokenInPrice, _tokenOutPrice
         );
     }
 
     // Internal function to get current borrow amount
     function _getCurrentBorrowAmount(ILendingPool lendingPool, address _user) internal view returns (uint256) {
         BorrowData memory borrowData = BorrowData({
-            totalBorrowAssets: lendingPool.totalBorrowAssets(),
-            totalBorrowShares: lendingPool.totalBorrowShares(),
-            userBorrowShares: lendingPool.userBorrowShares(_user)
+            totalBorrowAssets: ILPRouter(lendingPool.router()).totalBorrowAssets(),
+            totalBorrowShares: ILPRouter(lendingPool.router()).totalBorrowShares(),
+            userBorrowShares: ILPRouter(lendingPool.router()).userBorrowShares(_user)
         });
-        
-        return borrowData.totalBorrowAssets == 0 ? 0 : 
-            (borrowData.userBorrowShares * borrowData.totalBorrowAssets) / borrowData.totalBorrowShares;
+
+        return borrowData.totalBorrowAssets == 0
+            ? 0
+            : (borrowData.userBorrowShares * borrowData.totalBorrowAssets) / borrowData.totalBorrowShares;
     }
 
     function getExchangeRate(address _tokenIn, address _tokenOut, uint256 _amountIn, address _position)
@@ -111,8 +109,8 @@ contract HelperUtils {
         ILendingPool lendingPool = ILendingPool(_lendingPool);
 
         // Get basic user data
-        address userPosition = lendingPool.addressPositions(_user);
-        uint256 userBorrowShares = lendingPool.userBorrowShares(_user);
+        address userPosition = ILPRouter(lendingPool.router()).addressPositions(_user);
+        uint256 userBorrowShares = ILPRouter(lendingPool.router()).userBorrowShares(_user);
 
         if (userBorrowShares == 0) {
             return 69; // No debt = infinite health factor
@@ -126,7 +124,7 @@ contract HelperUtils {
         uint256 borrowValue = _calculateBorrowValue(lendingPool, _user);
 
         // Calculate health factor
-        uint256 ltv = lendingPool.ltv();
+        uint256 ltv = ILPRouter(lendingPool.router()).ltv();
         uint256 healthFactor = (collateralValue * (ltv * 1e8 / 1e18)) / borrowValue;
 
         return healthFactor; // >1e8 is healthy, <1e8 is unhealthy
@@ -136,7 +134,7 @@ contract HelperUtils {
     function _calculateCollateralValue(address userPosition) internal view returns (uint256) {
         uint256 collateralValue = 0;
         uint256 counter = IPosition(userPosition).counter();
-        
+
         for (uint256 i = 1; i <= counter; i++) {
             address token = IPosition(userPosition).tokenLists(i);
             if (token != address(0)) {
@@ -145,7 +143,7 @@ contract HelperUtils {
                 collateralValue += (getTokenValue(token) * tokenBalance / 10 ** tokenDecimals);
             }
         }
-        
+
         return collateralValue;
     }
 
@@ -153,15 +151,16 @@ contract HelperUtils {
     function _calculateBorrowValue(ILendingPool lendingPool, address _user) internal view returns (uint256) {
         // Reuse BorrowData struct to group variables
         BorrowData memory borrowData = BorrowData({
-            totalBorrowAssets: lendingPool.totalBorrowAssets(),
-            totalBorrowShares: lendingPool.totalBorrowShares(),
-            userBorrowShares: lendingPool.userBorrowShares(_user)
+            totalBorrowAssets: ILPRouter(lendingPool.router()).totalBorrowAssets(),
+            totalBorrowShares: ILPRouter(lendingPool.router()).totalBorrowShares(),
+            userBorrowShares: ILPRouter(lendingPool.router()).userBorrowShares(_user)
         });
-        
-        address borrowToken = lendingPool.borrowToken();
-        uint256 borrowAssets = (borrowData.userBorrowShares * borrowData.totalBorrowAssets) / borrowData.totalBorrowShares;
+
+        address borrowToken = ILPRouter(lendingPool.router()).borrowToken();
+        uint256 borrowAssets =
+            (borrowData.userBorrowShares * borrowData.totalBorrowAssets) / borrowData.totalBorrowShares;
         uint256 borrowDecimals = IERC20Metadata(borrowToken).decimals();
-        
+
         return getTokenValue(borrowToken) * borrowAssets / 10 ** borrowDecimals;
     }
 }

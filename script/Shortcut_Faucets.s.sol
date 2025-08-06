@@ -33,7 +33,7 @@ contract FaucetsScript is Script, Helper {
         uint256 amountFaucets = amount * (10 ** decimal);
 
         vm.startBroadcast(privateKey);
-        ITokenSwap(claimToken).mintMock(claimAddress, amountFaucets);
+        ITokenSwap(claimToken).mint(claimAddress, amountFaucets);
         console.log("faucet success amount", amountFaucets);
         console.log("faucet success address", claimAddress);
         vm.stopBroadcast();

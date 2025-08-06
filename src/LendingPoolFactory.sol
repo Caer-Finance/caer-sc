@@ -12,6 +12,8 @@ import {ILPDeployer} from "./interfaces/ILPDeployer.sol";
  * and cross-chain token senders.
  */
 contract LendingPoolFactory {
+    error OnlyOwner();
+
     /**
      * @notice Emitted when a new lending pool is created
      * @param collateralToken The address of the collateral token
@@ -59,11 +61,17 @@ contract LendingPoolFactory {
     /// @notice The address of the lending pool deployer contract
     address public lendingPoolDeployer;
 
+    /// @notice The address of the lending pool router deployer contract
+    address public lendingPoolRouterDeployer;
+
     /// @notice The address of the protocol contract
     address public protocol;
 
     /// @notice The address of the bridge router contract
     address public helper;
+
+    /// @notice The address of the bridge router contract
+    address public bridgeRouter;
 
     /// @notice Mapping from chain ID to basic token sender address
     mapping(uint256 => address) public basicTokenSender;
@@ -82,12 +90,21 @@ contract LendingPoolFactory {
      * @param _isHealthy The address of the IsHealthy contract
      * @param _lendingPoolDeployer The address of the lending pool deployer contract
      */
-    constructor(address _isHealthy, address _lendingPoolDeployer, address _protocol, address _helper) {
+    constructor(
+        address _isHealthy,
+        address _lendingPoolDeployer,
+        address _lendingPoolRouterDeployer,
+        address _protocol,
+        address _helper,
+        address _bridgeRouter
+    ) {
         owner = msg.sender;
-        isHealthy = _isHealthy;
+        lendingPoolRouterDeployer = _lendingPoolRouterDeployer;
         lendingPoolDeployer = _lendingPoolDeployer;
+        isHealthy = _isHealthy;
         protocol = _protocol;
         helper = _helper;
+        bridgeRouter = _bridgeRouter;
     }
 
     /**
@@ -99,7 +116,7 @@ contract LendingPoolFactory {
     }
 
     function _onlyOwner() internal view {
-        require(msg.sender == owner, "Only owner can call this function");
+        if (msg.sender != owner) revert OnlyOwner();
     }
 
     /**
@@ -131,7 +148,27 @@ contract LendingPoolFactory {
         emit TokenDataStreamAdded(_token, _dataStream);
     }
 
+    function updateLendingPoolRouterDeployer(address _lendingPoolRouterDeployer) public onlyOwner {
+        lendingPoolRouterDeployer = _lendingPoolRouterDeployer;
+    }
+
+    function updateLendingPoolDeployer(address _lendingPoolDeployer) public onlyOwner {
+        lendingPoolDeployer = _lendingPoolDeployer;
+    }
+
+    function updateIsHealthy(address _isHealthy) public onlyOwner {
+        isHealthy = _isHealthy;
+    }
+
+    function updateProtocol(address _protocol) public onlyOwner {
+        protocol = _protocol;
+    }
+
     function updateHelper(address _helper) public onlyOwner {
         helper = _helper;
+    }
+
+    function updateBridgeRouter(address _bridgeRouter) public onlyOwner {
+        bridgeRouter = _bridgeRouter;
     }
 }

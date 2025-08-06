@@ -155,9 +155,9 @@ contract Position is ReentrancyGuard {
         address _tokenOutPrice = IFactory(factory).tokenDataStream(_tokenOut);
 
         amountOut = tokenCalculator(_tokenIn, _tokenOut, amountIn, _tokenInPrice, _tokenOutPrice);
-        ITokenSwap(_tokenIn).burnMock(amountIn);
-        ITokenSwap(_tokenOut).mintMock(address(this), amountOut);
-        emit SwapTokenByPosition(msg.sender, _tokenIn, _tokenOut, amountIn, amountOut);
+        ITokenSwap(_tokenIn).burn(amountIn);
+        ITokenSwap(_tokenOut).mint(address(this), amountOut);
+        emit SwapTokenByPosition(owner, _tokenIn, _tokenOut, amountIn, amountOut);
     }
 
     /**

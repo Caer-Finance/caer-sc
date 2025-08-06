@@ -10,7 +10,7 @@ import {CaerBridgeTokenSender} from "../src/CaerBridgeTokenSender.sol";
 import {CaerBridgeTokenReceiver} from "../src/CaerBridgeTokenReceiver.sol";
 import {MockWBTC} from "../src/mocks/MockWBTC.sol";
 import {MockWETH} from "../src/mocks/MockWETH.sol";
-import {ITokenSwap} from "../src/interfaces/ITokenSwap.sol";
+
 import {Protocol} from "../src/Protocol.sol";
 import {IsHealthy} from "../src/IsHealthy.sol";
 import {LendingPoolDeployer} from "../src/LendingPoolDeployer.sol";
@@ -104,19 +104,19 @@ contract CaerScript is Script {
         if (block.chainid == DESTINATION_chainId) {
             // ** RECEIVER AND TOKEN
             helperTestnet = new HelperTestnet();
-            mockUSDC = new MockUSDC(address(helperTestnet));
+            mockUSDC = new MockUSDC();
             caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockUSDC));
             console.log("address public UsdcBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
-            mockUSDT = new MockUSDT(address(helperTestnet));
+            mockUSDT = new MockUSDT();
             caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockUSDT));
             console.log("address public UsdtBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
-            mockWAVAX = new MockWAVAX(address(helperTestnet));
+            mockWAVAX = new MockWAVAX();
             caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockWAVAX));
             console.log("address public WavaxBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
-            mockWBTC = new MockWBTC(address(helperTestnet));
+            mockWBTC = new MockWBTC();
             caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockWBTC));
             console.log("address public BtcBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
-            mockWETH = new MockWETH(address(helperTestnet));
+            mockWETH = new MockWETH();
             caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockWETH));
             console.log("address public EthBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
 
@@ -151,9 +151,16 @@ contract CaerScript is Script {
 
             // **************** CORE CONTRACT ******************
             lendingPoolFactory = new LendingPoolFactory(
-                address(isHealthy), address(lendingPoolDeployer), address(protocol), address(helperTestnet)
+                address(isHealthy),
+                address(lendingPoolDeployer),
+                address(0),
+                address(protocol),
+                address(helperTestnet),
+                address(0)
             );
-            lendingPool = new LendingPool(address(mockWETH), address(mockUSDC), address(lendingPoolFactory), 7e17);
+            lendingPool = new LendingPool(
+                address(mockWETH), address(mockUSDC), address(lendingPoolFactory), address(protocol), 7e17
+            );
             position =
                 new Position(address(mockWETH), address(mockUSDC), address(lendingPool), address(lendingPoolFactory));
             lendingPoolDeployer.setFactory(address(lendingPoolFactory));
@@ -211,23 +218,23 @@ contract CaerScript is Script {
 
     function deployMockToken() public {
         if (UsdcBridgeTokenReceiver == address(0)) revert("UsdcBridgeTokenReceiver is not set");
-        mockUSDC = new MockUSDC(address(helperTestnet));
+        mockUSDC = new MockUSDC();
         pairBridgeToToken(address(helperTestnet), address(mockUSDC), UsdcBridgeTokenReceiver, DESTINATION_chainId);
 
         if (UsdtBridgeTokenReceiver == address(0)) revert("UsdtBridgeTokenReceiver is not set");
-        mockUSDT = new MockUSDT(address(helperTestnet));
+        mockUSDT = new MockUSDT();
         pairBridgeToToken(address(helperTestnet), address(mockUSDT), UsdtBridgeTokenReceiver, DESTINATION_chainId);
 
         if (WavaxBridgeTokenReceiver == address(0)) revert("WavaxBridgeTokenReceiver is not set");
-        mockWAVAX = new MockWAVAX(address(helperTestnet));
+        mockWAVAX = new MockWAVAX();
         pairBridgeToToken(address(helperTestnet), address(mockWAVAX), WavaxBridgeTokenReceiver, DESTINATION_chainId);
 
         if (BtcBridgeTokenReceiver == address(0)) revert("BtcBridgeTokenReceiver is not set");
-        mockWBTC = new MockWBTC(address(helperTestnet));
+        mockWBTC = new MockWBTC();
         pairBridgeToToken(address(helperTestnet), address(mockWBTC), BtcBridgeTokenReceiver, DESTINATION_chainId);
 
         if (EthBridgeTokenReceiver == address(0)) revert("EthBridgeTokenReceiver is not set");
-        mockWETH = new MockWETH(address(helperTestnet));
+        mockWETH = new MockWETH();
         pairBridgeToToken(address(helperTestnet), address(mockWETH), EthBridgeTokenReceiver, DESTINATION_chainId);
         // **************** SOLIDITY ****************
         console.log("************ COPY ORIGIN ADDRESS **************");
@@ -259,7 +266,8 @@ contract CaerScript is Script {
             _caerBridgeTokenReceiver, // ** otherchain ** RECEIVER BRIDGE
             _chainId // ** otherchain ** CHAIN ID
         );
-        ITokenSwap(_mockToken).addBridgeTokenSender(address(caerBridgeTokenSender));
+        // TODO: add to BridgeRouter
+        // ITokenSwap(_mockToken).addBridgeTokenSender(address(caerBridgeTokenSender));
     }
 
     // RUN

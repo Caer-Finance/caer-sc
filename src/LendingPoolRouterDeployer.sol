@@ -1,21 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {LendingPool} from "./LendingPool.sol";
-import {IFactory} from "./interfaces/IFactory.sol";
+import {LendingPoolRouter} from "./LendingPoolRouter.sol";
 
-/**
- * @title LendingPoolDeployer
- * @author Caer Protocol
- * @notice A factory contract for deploying new LendingPool instances
- * @dev This contract is responsible for creating new lending pools with specified parameters
- *
- * The LendingPoolDeployer allows the factory to create new lending pools with different
- * collateral and borrow token pairs, along with configurable loan-to-value (LTV) ratios.
- * Each deployed pool is a separate contract instance that manages lending and borrowing
- * operations for a specific token pair.
- */
-contract LendingPoolDeployer {
+
+contract LendingPoolRouterDeployer {
     error OnlyFactoryCanCall();
     error OnlyOwnerCanCall();
 
@@ -63,14 +52,13 @@ contract LendingPoolDeployer {
      *
      * @custom:security This function should only be called by the factory contract
      */
-    function deployLendingPool(address _collateralToken, address _borrowToken, uint256 _ltv)
+    function deployLendingPoolRouter(address _lendingPool, address _factory, address _collateralToken, address _borrowToken, uint256 _ltv)
         public
         onlyFactory
         returns (address)
     {
-        LendingPool lendingPool =
-            new LendingPool(_collateralToken, _borrowToken, factory, IFactory(factory).protocol(), _ltv);
-        return address(lendingPool);
+        LendingPoolRouter lendingPoolRouter = new LendingPoolRouter(_lendingPool, _factory, _collateralToken, _borrowToken, _ltv);
+        return address(lendingPoolRouter);
     }
 
     function setFactory(address _factory) public onlyOwner {

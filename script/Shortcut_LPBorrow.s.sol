@@ -9,6 +9,7 @@ import {Helper} from "./Helper.sol";
 import {ILendingPool} from "../src/interfaces/ILendingPool.sol";
 import {IHelperTestnet} from "../src/interfaces/IHelperTestnet.sol";
 import {IFactory} from "../src/interfaces/IFactory.sol";
+import {ILPRouter} from "../src/interfaces/ILPRouter.sol";
 
 contract LPBorrowScript is Script, Helper {
     // --------- FILL THIS ----------
@@ -35,7 +36,8 @@ contract LPBorrowScript is Script, Helper {
 
     function run() public {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
-        address borrowToken = ILendingPool(ORIGIN_lendingPool).borrowToken();
+        address LPRouter = ILendingPool(ORIGIN_lendingPool).router();
+        address borrowToken = ILPRouter(LPRouter).borrowToken();
         uint256 lpBorrowBalance = IERC20(borrowToken).balanceOf(ORIGIN_lendingPool);
         uint256 decimal = IERC20Metadata(borrowToken).decimals();
         uint256 amountBorrow = amount * (10 ** decimal);

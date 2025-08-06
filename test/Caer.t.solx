@@ -83,11 +83,11 @@ contract CaerTest is Test {
         lendingPool.createPosition();
         vm.stopPrank();
 
-        usdc.mintMock(alice, 10_000e6);
-        weth.mintMock(alice, 100e18);
+        usdc.mint(alice, 10_000e6);
+        weth.mint(alice, 100e18);
 
-        usdc.mintMock(bob, 2000e6);
-        weth.mintMock(bob, 200e18);
+        usdc.mint(bob, 2000e6);
+        weth.mint(bob, 200e18);
     }
 
     function test_deployLendingPool() public {
@@ -199,8 +199,8 @@ contract CaerTest is Test {
 
         // Try to borrow with zero collateral (should revert if enforced)
         address charlie = makeAddr("charlie");
-        usdc.mintMock(charlie, 1000e6);
-        weth.mintMock(charlie, 10e18);
+        usdc.mint(charlie, 1000e6);
+        weth.mint(charlie, 10e18);
         vm.startPrank(charlie);
         lendingPool.createPosition();
         // No collateral supplied

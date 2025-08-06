@@ -18,7 +18,7 @@ contract DeployTokenNewChainScript is Script, Helper {
     CaerBridgeTokenSender public caerBridgeTokenSender;
     MockUSDC public mockUSDC;
     MockUSDT public mockUSDT;
-    MockWAVAX public mockWAVAXMockWAVAX;
+    MockWAVAX public mockWAVAX;
     MockWBTC public mockWBTC;
     MockWETH public mockWETH;
 
@@ -34,19 +34,19 @@ contract DeployTokenNewChainScript is Script, Helper {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(privateKey);
         helperTestnet = new HelperTestnet();
-        mockUSDC = new MockUSDC(address(helperTestnet));
+        mockUSDC = new MockUSDC();
         caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockUSDC));
         console.log("address public UsdcBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
-        mockUSDT = new MockUSDT(address(helperTestnet));
+        mockUSDT = new MockUSDT();
         caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockUSDT));
         console.log("address public UsdtBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
-        mockWAVAXMockWAVAX = new MockWAVAX(address(helperTestnet));
-        caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockWAVAXMockWAVAX));
+        mockWAVAX = new MockWAVAX();
+        caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockWAVAX));
         console.log("address public WaVAXMockWAVAXBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
-        mockWBTC = new MockWBTC(address(helperTestnet));
+        mockWBTC = new MockWBTC();
         caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockWBTC));
         console.log("address public BtcBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
-        mockWETH = new MockWETH(address(helperTestnet));
+        mockWETH = new MockWETH();
         caerBridgeTokenReceiver = new CaerBridgeTokenReceiver(address(helperTestnet), address(mockWETH));
         console.log("address public EthBridgeTokenReceiver = ", address(caerBridgeTokenReceiver), ";");
 
@@ -55,7 +55,7 @@ contract DeployTokenNewChainScript is Script, Helper {
         console.log("address public DESTINATION_helperTestnet = ", address(helperTestnet), ";");
         console.log("address public DESTINATION_mockUSDC = ", address(mockUSDC), ";");
         console.log("address public DESTINATION_mockUSDT = ", address(mockUSDT), ";");
-        console.log("address public DESTINATION_mockWAVAXMockWAVAX = ", address(mockWAVAXMockWAVAX), ";");
+        console.log("address public DESTINATION_mockWAVAX = ", address(mockWAVAX), ";");
         console.log("address public DESTINATION_mockWBTC = ", address(mockWBTC), ";");
         console.log("address public DESTINATION_mockWETH = ", address(mockWETH), ";");
         // **************** JAVASCRIPT ****************
@@ -64,7 +64,7 @@ contract DeployTokenNewChainScript is Script, Helper {
         console.log("export const DESTINATION_mockWETH = ", address(mockWETH), ";");
         console.log("export const DESTINATION_mockUSDC = ", address(mockUSDC), ";");
         console.log("export const DESTINATION_mockUSDT = ", address(mockUSDT), ";");
-        console.log("export const DESTINATION_mockWAVAXMockWAVAX = ", address(mockWAVAXMockWAVAX), ";");
+        console.log("export const DESTINATION_mockWAVAX = ", address(mockWAVAX), ";");
         console.log("export const DESTINATION_mockWBTC = ", address(mockWBTC), ";");
         vm.stopBroadcast();
     }

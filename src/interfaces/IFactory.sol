@@ -11,4 +11,8 @@ interface IFactory {
     function protocol() external view returns (address);
     function poolCount() external view returns (uint256);
     function helper() external view returns (address);
+    function bridgeRouter() external view returns (address);
+    function lendingPoolDeployer() external view returns (address);
+    function lendingPoolRouterDeployer() external view returns (address);
+    function lendingPoolRouter() external view returns (address);
 }

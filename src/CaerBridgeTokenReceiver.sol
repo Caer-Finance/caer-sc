@@ -29,6 +29,7 @@ contract CaerBridgeTokenReceiver is IMessageRecipient {
     }
 
     function _onlyMailbox() internal view {
+        // TODO: change mailbox from helperTestnet
         if (msg.sender != address(mailbox)) revert NotMailbox();
     }
 
@@ -36,7 +37,11 @@ contract CaerBridgeTokenReceiver is IMessageRecipient {
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _messageBody) external override onlyMailbox {
         (address recipient, uint256 amount) = abi.decode(_messageBody, (address, uint256));
         // ITokenSwap(token).mint(recipient, amount);
-        ITokenSwap(token).mintMock(recipient, amount);
+        ITokenSwap(token).mint(recipient, amount);
         emit ReceivedMessage(_origin, _sender, _messageBody);
+    }
+
+    function setHelperTestnet(address _helperTestnet) external {
+        helperTestnet = _helperTestnet;
     }
 }

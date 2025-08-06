@@ -5,6 +5,7 @@ import {Script, console} from "forge-std/Script.sol";
 import {ILendingPool} from "../src/interfaces/ILendingPool.sol";
 import {Helper} from "./Helper.sol";
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {ILPRouter} from "../src/interfaces/ILPRouter.sol";
 
 contract Shortcut_SwapCollateral is Script, Helper {
     // --------- FILL THIS ----------
@@ -30,7 +31,8 @@ contract Shortcut_SwapCollateral is Script, Helper {
 
     function run() public {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
-        address userPosition = ILendingPool(ORIGIN_lendingPool).addressPositions(yourWallet);
+        address LPRouter = ILendingPool(ORIGIN_lendingPool).router();
+        address userPosition = ILPRouter(LPRouter).addressPositions(yourWallet);
 
         vm.startBroadcast(privateKey);
         uint256 tokenInBefore = IERC20(tokenIn).balanceOf(userPosition);
