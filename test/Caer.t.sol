@@ -16,7 +16,7 @@ import {HelperTestnet} from "../src/HelperTestnet.sol";
 import {IsHealthy} from "../src/IsHealthy.sol";
 import {Protocol} from "../src/Protocol.sol";
 
-contract LendingPoolFactoryHyperlaneTest is Test {
+contract CaerTest is Test {
     IsHealthy public isHealthy;
     LendingPoolDeployer public lendingPoolDeployer;
     LendingPoolFactory public lendingPoolFactory;

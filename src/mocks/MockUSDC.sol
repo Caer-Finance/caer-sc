@@ -1,23 +1,42 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 
-import {BurnMintERC677} from "@chainlink-evm/contracts/src/v0.8/shared/token/ERC677/BurnMintERC677.sol";
-import {IGetCCIPAdmin} from "@chainlink-ccip/chains/evm/contracts/interfaces/IGetCCIPAdmin.sol";
 import {ICaerBridgeTokenSender} from "../interfaces/ICaerBridgeTokenSender.sol";
+import {ERC20} from "@openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
-contract MockUSDC is BurnMintERC677, IGetCCIPAdmin {
+contract MockUSDC is ERC20 {
     error InvalidChainId();
+    error NotOwner();
 
     address public helperTestnet;
+    address public owner;
     mapping(uint256 => address[]) public bridgeTokenSenders;
 
     event BridgeTokenSenderAdded(address indexed bridgeTokenSender, uint256 indexed chainId);
 
-    constructor(address _helperTestnet) BurnMintERC677("USDC", "USDC", 6, 0) {
+    constructor(address _helperTestnet) ERC20("USDC", "USDC") {
         helperTestnet = _helperTestnet;
+        owner = msg.sender;
+    }
+
+    modifier _onlyOwner() {
+        __onlyOwner();
+        _;
+    }
+
+    function __onlyOwner() internal view {
+        if (msg.sender != owner) revert NotOwner();
     }
 
     // this function for hackathon purposes
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
+
+    function burn(uint256 amount) public {
+        _burn(msg.sender, amount);
+    }
+
     function mintMock(address to, uint256 amount) public {
         _mint(to, amount);
     }
@@ -26,11 +45,11 @@ contract MockUSDC is BurnMintERC677, IGetCCIPAdmin {
         _burn(msg.sender, amount);
     }
 
-    function getCCIPAdmin() external view override returns (address) {
-        return owner();
+    function decimals() public pure override returns (uint8) {
+        return 6;
     }
 
-    function addBridgeTokenSender(address _bridgeTokenSender) public onlyOwner {
+    function addBridgeTokenSender(address _bridgeTokenSender) public _onlyOwner {
         uint256 _chainId = ICaerBridgeTokenSender(_bridgeTokenSender).chainId();
         if (_chainId == 0) revert InvalidChainId();
         bridgeTokenSenders[_chainId].push(_bridgeTokenSender);

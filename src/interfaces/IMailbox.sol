@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity >=0.8.0;
-
-// import {IInterchainSecurityModule} from "@hyperlane-xyz/interfaces/IInterchainSecurityModule.sol";
-import {IInterchainSecurityModule} from
-    "../../lib/hyperlane-monorepo/solidity/contracts/interfaces/IInterchainSecurityModule.sol";
+import {IInterchainSecurityModule} from "@hyperlane-xyz/interfaces/IInterchainSecurityModule.sol";
 
 interface IMailbox {
     // ============ Events ============

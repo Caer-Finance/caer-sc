@@ -46,11 +46,11 @@ contract HelperTestnet {
 
         // ARBITRUM_SEPOLIA
         chains[421614] =
-            ChainInfo(0x598facE78a4302f11E3de0bee1894Da0b2Cb71F8, 0xc756cFc1b7d0d4646589EDf10eD54b201237F5e8, 421614);
+            ChainInfo(0xeeCe1088FD44E74Eb7B0045a4798a4c97A8143dC, 0xdf2706AD5966ac71C9016b4a4F93c9054e48F54b, 421614);
 
         // BASE_SEPOLIA
         chains[84532] =
-            ChainInfo(0x6966b0E55883d49BFB24539356a2f8A673E02039, 0x28B02B97a850872C4D33C3E024fab6499ad96564, 84532);
+            ChainInfo(0x743Ff3d08e13aF951e4b60017Cf261BFc8457aE4, 0x677a021bdf36a7409D02A974cb6E19EE4c2F0632, 84532);
 
         // BSC_TESTNET
         chains[97] =
@@ -175,6 +175,10 @@ contract HelperTestnet {
         // LOAD
         chains[9496] =
             ChainInfo(0x589C201a07c26b4725A4A829d772f24423da480B, 0x8584590ad637C61C7cDF72eFF3381Ee1c3D1bC8E, 9496);
+
+        // ETHERLINK
+        chains[128123] =
+            ChainInfo(0xDfaa17BF52afc5a12d06964555fAAFDADD53FF5e, 0xC4c34aFF9f5dE4D9623349ce8EAc8589cE796fD7, 128123);
     }
 
     function addChain(address _mailbox, address _gasMaster, uint32 _domainId, uint256 _chainId) public onlyOwner {
@@ -184,5 +188,9 @@ contract HelperTestnet {
 
     function addReceiverBridge(uint256 _chainId, address _receiverBridge) public onlyOwner {
         receiverBridge[_chainId] = _receiverBridge;
+    }
+
+    function updateChain(uint256 _chainId, address _mailbox, address _gasMaster, uint32 _domainId) public onlyOwner {
+        chains[_chainId] = ChainInfo(_mailbox, _gasMaster, _domainId);
     }
 }

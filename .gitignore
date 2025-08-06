@@ -14,7 +14,7 @@ docs/
 .env
 
 /src/layerzero/
-/src/ccip/*
+/src/ccip/
 /src/learn-hyperlane/
 
 /script/BridgeTokenReceiver.s.sol
