@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract HelperTestnet {
+import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
+
+contract HelperTestnet is Ownable {
     error NotOwner();
     error ChainAlreadyExists();
     error TokenAlreadyExists();
@@ -16,21 +18,9 @@ contract HelperTestnet {
     mapping(uint256 => ChainInfo) public chains;
     mapping(uint256 => address) public receiverBridge;
 
-    address public owner;
-
     uint256 public chainId;
 
-    modifier onlyOwner() {
-        _onlyOwner();
-        _;
-    }
-
-    function _onlyOwner() internal view {
-        if (msg.sender != owner) revert NotOwner();
-    }
-
-    constructor() {
-        owner = msg.sender;
+    constructor() Ownable(msg.sender) {
         chainId = block.chainid;
         // ABSTRACT
         chains[11124] =

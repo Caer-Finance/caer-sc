@@ -10,7 +10,7 @@ contract WrappedToken is ERC20 {
         bridge = msg.sender;
     }
 
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
+    function mint(address _to, uint256 _amount) external {
+        _mint(_to, _amount);
     }
 }

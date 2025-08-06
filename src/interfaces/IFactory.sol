@@ -2,17 +2,34 @@
 pragma solidity ^0.8.13;
 
 interface IFactory {
-    function tokenDataStream(address _token) external view returns (address);
-    function basicTokenSender(uint256 _chainId) external view returns (address);
+    struct Pool {
+        address collateralToken;
+        address borrowToken;
+        address lendingPoolAddress;
+    }
+
+    // ** READ
     function owner() external view returns (address);
     function isHealthy() external view returns (address);
-    function addTokenDataStream(address _token, address _dataStream) external;
-    function createLendingPool(address _collateralToken, address _borrowToken, uint256 _ltv) external returns (address);
-    function protocol() external view returns (address);
-    function poolCount() external view returns (uint256);
-    function helper() external view returns (address);
-    function bridgeRouter() external view returns (address);
     function lendingPoolDeployer() external view returns (address);
     function lendingPoolRouterDeployer() external view returns (address);
-    function lendingPoolRouter() external view returns (address);
+    function protocol() external view returns (address);
+    function helper() external view returns (address);
+    function bridgeRouter() external view returns (address);
+    function tokenDataStream(address _token) external view returns (address);
+    function pools(uint256 _index) external view returns (Pool memory);
+    function poolCount() external view returns (uint256);
+    function getPoolLength() external view returns (uint256);
+
+    // ** WRITE
+    function createLendingPool(address _collateralToken, address _borrowToken, uint256 _ltv)
+        external
+        returns (address);
+    function addTokenDataStream(address _token, address _dataStream) external;
+    function updateLendingPoolRouterDeployer(address _lendingPoolRouterDeployer) external;
+    function updateLendingPoolDeployer(address _lendingPoolDeployer) external;
+    function updateIsHealthy(address _isHealthy) external;
+    function updateProtocol(address _protocol) external;
+    function updateHelper(address _helper) external;
+    function updateBridgeRouter(address _bridgeRouter) external;
 }

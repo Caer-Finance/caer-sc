@@ -4,8 +4,9 @@ pragma solidity ^0.8.17;
 import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
 import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
 import {IHelperTestnet} from "./interfaces/IHelperTestnet.sol";
+import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract CaerBridgeTokenReceiver is IMessageRecipient {
+contract CaerBridgeTokenReceiver is IMessageRecipient, Ownable {
     error MailboxNotSet();
     error NotMailbox();
 
@@ -15,11 +16,11 @@ contract CaerBridgeTokenReceiver is IMessageRecipient {
     address public token;
     address public helperTestnet;
 
-    constructor(address _helperTestnet, address _token) {
+    constructor(address _helperTestnet, address _token) Ownable(msg.sender) {
         helperTestnet = _helperTestnet;
-        (address _mailbox,,) = IHelperTestnet(helperTestnet).chains(block.chainid);
-        if (_mailbox == address(0)) revert MailboxNotSet();
-        mailbox = _mailbox;
+        IHelperTestnet.ChainInfo memory helper = IHelperTestnet(helperTestnet).chains(block.chainid);
+        if (helper.mailbox == address(0)) revert MailboxNotSet();
+        mailbox = helper.mailbox;
         token = _token;
     }
 
@@ -29,7 +30,6 @@ contract CaerBridgeTokenReceiver is IMessageRecipient {
     }
 
     function _onlyMailbox() internal view {
-        // TODO: change mailbox from helperTestnet
         if (msg.sender != address(mailbox)) revert NotMailbox();
     }
 
@@ -41,7 +41,7 @@ contract CaerBridgeTokenReceiver is IMessageRecipient {
         emit ReceivedMessage(_origin, _sender, _messageBody);
     }
 
-    function setHelperTestnet(address _helperTestnet) external {
+    function setHelperTestnet(address _helperTestnet) external onlyOwner {
         helperTestnet = _helperTestnet;
     }
 }

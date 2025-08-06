@@ -2,5 +2,5 @@
 pragma solidity ^0.8.20;
 
 interface IWrappedToken {
-    function mint(address to, uint256 amount) external;
+    function mint(address _to, uint256 _amount) external;
 }

@@ -53,19 +53,20 @@ contract LPBorrowScript is Script, Helper {
             console.log("borrow token address", borrowToken);
 
             address helperTestnet = IFactory(ORIGIN_lendingPoolFactory).helper();
-            (,, uint32 destinationDomain) = IHelperTestnet(helperTestnet).chains(uint256(chainId));
-            console.log("destinationDomain", destinationDomain);
-            (, address interchainGasPaymaster,) = IHelperTestnet(helperTestnet).chains(uint256(block.chainid));
-            console.log("interchainGasPaymaster", interchainGasPaymaster);
+            IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(uint256(chainId));
+            console.log("destinationDomain", helperDestination.domainId);
+            IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(uint256(block.chainid));
+            console.log("interchainGasPaymaster", helperOrigin.gasMaster);
             uint256 gasAmount;
             if (block.chainid == chainId) {
                 gasAmount = 0;
             } else {
-                gasAmount =
-                    IInterchainGasPaymaster(interchainGasPaymaster).quoteGasPayment(destinationDomain, amountBorrow);
+                gasAmount = IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(
+                    helperDestination.domainId, amountBorrow
+                );
                 console.log("gasAmount", gasAmount);
             }
-            ILendingPool(ORIGIN_lendingPool).borrowDebt{value: gasAmount}(amountBorrow, chainId, 0);
+            ILendingPool(ORIGIN_lendingPool).borrowDebt{value: gasAmount}(amountBorrow, chainId);
 
             console.log("success");
             console.log("LP balance after borrow", IERC20(borrowToken).balanceOf(ORIGIN_lendingPool));

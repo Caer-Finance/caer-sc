@@ -5,10 +5,8 @@ import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
-
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IPosition} from "./interfaces/IPosition.sol";
-
 import {ICaerBridgeTokenSender} from "./interfaces/ICaerBridgeTokenSender.sol";
 import {IHelperTestnet} from "./interfaces/IHelperTestnet.sol";
 import {ILPRouter} from "./interfaces/ILPRouter.sol";
@@ -155,7 +153,7 @@ contract LendingPool is ReentrancyGuard {
 
         IPosition(ILPRouter(router).addressPositions(msg.sender)).withdrawCollateral(_amount, msg.sender);
 
-        ILPRouter(router).withdrawCollateral(_amount, msg.sender);
+        ILPRouter(router).withdrawCollateral(msg.sender);
     }
 
     /**
@@ -173,15 +171,15 @@ contract LendingPool is ReentrancyGuard {
 
         if (_chainId != block.chainid) {
             address helperTestnet = IFactory(factory).helper();
-            (,, uint32 destinationDomain) = IHelperTestnet(helperTestnet).chains(_chainId);
-            (, address interchainGasPaymaster,) = IHelperTestnet(helperTestnet).chains(block.chainid);
+            IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainId);
+            IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
 
             address bridgeRouter = IFactory(factory).bridgeRouter();
             address bridgeTokenSenders =
                 IBridgeRouter(bridgeRouter).getBridgeTokenSendersChainId(ILPRouter(router).borrowToken(), _chainId);
 
             uint256 gasAmount =
-                IInterchainGasPaymaster(interchainGasPaymaster).quoteGasPayment(destinationDomain, userAmount); // TODO: BURN
+                IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, userAmount); // TODO: BURN
 
             IERC20(ILPRouter(router).borrowToken()).approve(bridgeTokenSenders, userAmount);
             ICaerBridgeTokenSender(bridgeTokenSenders).bridge{value: gasAmount}(
@@ -231,7 +229,7 @@ contract LendingPool is ReentrancyGuard {
      * @param _tokenFrom The address of the token to swap from.
      * @param _tokenTo The address of the token to receive.
      * @param _amountIn The amount of _tokenFrom to swap.
-     * @return amountOut The amount of _tokenTo received from the swap.
+     * @return _amountOut The amount of _tokenTo received from the swap.
      * @custom:throws ZeroAmount if amountIn is 0.
      * @custom:throws TokenNotAvailable if _tokenFrom is not available in position.
      */
@@ -239,7 +237,7 @@ contract LendingPool is ReentrancyGuard {
         public
         positionRequired
         updateInterest
-        returns (uint256 amountOut)
+        returns (uint256 _amountOut)
     {
         if (_amountIn == 0) revert ZeroAmount();
         if (
@@ -248,7 +246,7 @@ contract LendingPool is ReentrancyGuard {
         ) {
             revert TokenNotAvailable();
         }
-        amountOut = IPosition(ILPRouter(router).addressPositions(msg.sender)).swapTokenByPosition(
+        _amountOut = IPosition(ILPRouter(router).addressPositions(msg.sender)).swapTokenByPosition(
             _tokenFrom, _tokenTo, _amountIn
         );
     }

@@ -73,9 +73,6 @@ contract LendingPoolFactory {
     /// @notice The address of the bridge router contract
     address public bridgeRouter;
 
-    /// @notice Mapping from chain ID to basic token sender address
-    mapping(uint256 => address) public basicTokenSender;
-
     /// @notice Mapping from token address to its data stream address
     mapping(address => address) public tokenDataStream;
 
@@ -146,6 +143,10 @@ contract LendingPoolFactory {
     function addTokenDataStream(address _token, address _dataStream) public onlyOwner {
         tokenDataStream[_token] = _dataStream;
         emit TokenDataStreamAdded(_token, _dataStream);
+    }
+
+    function getPoolLength() public view returns (uint256) {
+        return pools.length;
     }
 
     function updateLendingPoolRouterDeployer(address _lendingPoolRouterDeployer) public onlyOwner {

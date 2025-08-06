@@ -2,19 +2,16 @@
 pragma solidity ^0.8.13;
 
 import {LendingPoolRouter} from "./LendingPoolRouter.sol";
+import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
 
-
-contract LendingPoolRouterDeployer {
+contract LendingPoolRouterDeployer is Ownable {
     error OnlyFactoryCanCall();
-    error OnlyOwnerCanCall();
-
+    error InvalidFactoryAddress();
     // Factory address
-    address public factory;
-    address public owner;
 
-    constructor() {
-        owner = msg.sender;
-    }
+    address public factory;
+
+    constructor() Ownable(msg.sender) {}
 
     modifier onlyFactory() {
         _onlyFactory();
@@ -23,15 +20,6 @@ contract LendingPoolRouterDeployer {
 
     function _onlyFactory() internal view {
         if (msg.sender != factory) revert OnlyFactoryCanCall();
-    }
-
-    modifier onlyOwner() {
-        _onlyOwner();
-        _;
-    }
-
-    function _onlyOwner() internal view {
-        if (msg.sender != owner) revert OnlyOwnerCanCall();
     }
 
     /**
@@ -52,16 +40,20 @@ contract LendingPoolRouterDeployer {
      *
      * @custom:security This function should only be called by the factory contract
      */
-    function deployLendingPoolRouter(address _lendingPool, address _factory, address _collateralToken, address _borrowToken, uint256 _ltv)
-        public
-        onlyFactory
-        returns (address)
-    {
-        LendingPoolRouter lendingPoolRouter = new LendingPoolRouter(_lendingPool, _factory, _collateralToken, _borrowToken, _ltv);
+    function deployLendingPoolRouter(
+        address _lendingPool,
+        address _factory,
+        address _collateralToken,
+        address _borrowToken,
+        uint256 _ltv
+    ) public onlyFactory returns (address) {
+        LendingPoolRouter lendingPoolRouter =
+            new LendingPoolRouter(_lendingPool, _factory, _collateralToken, _borrowToken, _ltv);
         return address(lendingPoolRouter);
     }
 
     function setFactory(address _factory) public onlyOwner {
+        if (_factory == address(0)) revert InvalidFactoryAddress();
         factory = _factory;
     }
 }

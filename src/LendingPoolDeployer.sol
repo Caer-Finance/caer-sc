@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import {LendingPool} from "./LendingPool.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
+import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
  * @title LendingPoolDeployer
@@ -15,17 +16,14 @@ import {IFactory} from "./interfaces/IFactory.sol";
  * Each deployed pool is a separate contract instance that manages lending and borrowing
  * operations for a specific token pair.
  */
-contract LendingPoolDeployer {
+contract LendingPoolDeployer is Ownable {
     error OnlyFactoryCanCall();
-    error OnlyOwnerCanCall();
+    error InvalidFactoryAddress();
 
     // Factory address
     address public factory;
-    address public owner;
 
-    constructor() {
-        owner = msg.sender;
-    }
+    constructor() Ownable(msg.sender) {}
 
     modifier onlyFactory() {
         _onlyFactory();
@@ -34,15 +32,6 @@ contract LendingPoolDeployer {
 
     function _onlyFactory() internal view {
         if (msg.sender != factory) revert OnlyFactoryCanCall();
-    }
-
-    modifier onlyOwner() {
-        _onlyOwner();
-        _;
-    }
-
-    function _onlyOwner() internal view {
-        if (msg.sender != owner) revert OnlyOwnerCanCall();
     }
 
     /**
@@ -74,6 +63,7 @@ contract LendingPoolDeployer {
     }
 
     function setFactory(address _factory) public onlyOwner {
+        if (_factory == address(0)) revert InvalidFactoryAddress();
         factory = _factory;
     }
 }
