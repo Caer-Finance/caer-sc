@@ -6,9 +6,9 @@ import {IERC20Metadata} from "@openzeppelin-contracts/contracts/token/ERC20/exte
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
 import {Helper} from "./Helper.sol";
-import {ILendingPool} from "../../src/hyperlane/interfaces/ILendingPool.sol";
-import {IHelperTestnet} from "../../src/hyperlane/interfaces/IHelperTestnet.sol";
-import {IFactory} from "../../src/hyperlane/interfaces/IFactory.sol";
+import {ILendingPool} from "../src/interfaces/ILendingPool.sol";
+import {IHelperTestnet} from "../src/interfaces/IHelperTestnet.sol";
+import {IFactory} from "../src/interfaces/IFactory.sol";
 
 contract LPBorrowScript is Script, Helper {
     // --------- FILL THIS ----------

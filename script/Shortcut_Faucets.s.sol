@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {Script, console} from "forge-std/Script.sol";
 import {IERC20Metadata} from "@openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {Helper} from "./Helper.sol";
-import {ITokenSwap} from "../../src/hyperlane/interfaces/ITokenSwap.sol";
+import {ITokenSwap} from "../src/interfaces/ITokenSwap.sol";
 
 contract FaucetsScript is Script, Helper {
     // ------- FILL THIS ----------

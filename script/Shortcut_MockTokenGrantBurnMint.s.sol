@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import {Script} from "forge-std/Script.sol";
 import {Helper} from "./Helper.sol";
-import {ITokenSwap} from "../../src/hyperlane/interfaces/ITokenSwap.sol";
+import {ITokenSwap} from "../src/interfaces/ITokenSwap.sol";
 
 contract MockTokenGrantBurnMint is Script, Helper {
     function setUp() public {

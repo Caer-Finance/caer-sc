@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Script, console} from "forge-std/Script.sol";
-import {ILendingPool} from "../../src/hyperlane/interfaces/ILendingPool.sol";
+import {ILendingPool} from "../src/interfaces/ILendingPool.sol";
 import {Helper} from "./Helper.sol";
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 

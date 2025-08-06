@@ -3,14 +3,14 @@ pragma solidity ^0.8.13;
 
 import {Script, console} from "forge-std/Script.sol";
 import {Helper} from "./Helper.sol";
-import {HelperTestnet} from "../../src/hyperlane/HelperTestnet.sol";
-import {CaerBridgeTokenReceiver} from "../../src/hyperlane/CaerBridgeTokenReceiver.sol";
-import {CaerBridgeTokenSender} from "../../src/hyperlane/CaerBridgeTokenSender.sol";
-import {MockWBTC} from "../../src/hyperlane/mocks/MockWBTC.sol";
-import {MockWETH} from "../../src/hyperlane/mocks/MockWETH.sol";
-import {MockUSDC} from "../../src/hyperlane/mocks/MockUSDC.sol";
-import {MockUSDT} from "../../src/hyperlane/mocks/MockUSDT.sol";
-import {MockWAVAX} from "../../src/hyperlane/mocks/MockWAVAX.sol";
+import {HelperTestnet} from "../src/HelperTestnet.sol";
+import {CaerBridgeTokenReceiver} from "../src/CaerBridgeTokenReceiver.sol";
+import {CaerBridgeTokenSender} from "../src/CaerBridgeTokenSender.sol";
+import {MockWBTC} from "../src/mocks/MockWBTC.sol";
+import {MockWETH} from "../src/mocks/MockWETH.sol";
+import {MockUSDC} from "../src/mocks/MockUSDC.sol";
+import {MockUSDT} from "../src/mocks/MockUSDT.sol";
+import {MockWAVAX} from "../src/mocks/MockWAVAX.sol";
 
 contract DeployTokenNewChainScript is Script, Helper {
     HelperTestnet public helperTestnet;

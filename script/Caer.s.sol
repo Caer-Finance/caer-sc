@@ -2,22 +2,22 @@
 pragma solidity ^0.8.20;
 
 import {Script, console} from "forge-std/Script.sol";
-import {MockUSDC} from "../../src/hyperlane/mocks/MockUSDC.sol";
-import {MockUSDT} from "../../src/hyperlane/mocks/MockUSDT.sol";
-import {MockWAVAX} from "../../src/hyperlane/mocks/MockWAVAX.sol";
-import {HelperTestnet} from "../../src/hyperlane/HelperTestnet.sol";
-import {CaerBridgeTokenSender} from "../../src/hyperlane/CaerBridgeTokenSender.sol";
-import {CaerBridgeTokenReceiver} from "../../src/hyperlane/CaerBridgeTokenReceiver.sol";
-import {MockWBTC} from "../../src/hyperlane/mocks/MockWBTC.sol";
-import {MockWETH} from "../../src/hyperlane/mocks/MockWETH.sol";
-import {ITokenSwap} from "../../src/hyperlane/interfaces/ITokenSwap.sol";
-import {Protocol} from "../../src/hyperlane/Protocol.sol";
-import {IsHealthy} from "../../src/hyperlane/IsHealthy.sol";
-import {LendingPoolDeployer} from "../../src/hyperlane/LendingPoolDeployer.sol";
-import {LendingPoolFactory} from "../../src/hyperlane/LendingPoolFactory.sol";
-import {LendingPool} from "../../src/hyperlane/LendingPool.sol";
-import {Position} from "../../src/hyperlane/Position.sol";
-import {Pricefeed} from "../../src/hyperlane/Pricefeed.sol";
+import {MockUSDC} from "../src/mocks/MockUSDC.sol";
+import {MockUSDT} from "../src/mocks/MockUSDT.sol";
+import {MockWAVAX} from "../src/mocks/MockWAVAX.sol";
+import {HelperTestnet} from "../src/HelperTestnet.sol";
+import {CaerBridgeTokenSender} from "../src/CaerBridgeTokenSender.sol";
+import {CaerBridgeTokenReceiver} from "../src/CaerBridgeTokenReceiver.sol";
+import {MockWBTC} from "../src/mocks/MockWBTC.sol";
+import {MockWETH} from "../src/mocks/MockWETH.sol";
+import {ITokenSwap} from "../src/interfaces/ITokenSwap.sol";
+import {Protocol} from "../src/Protocol.sol";
+import {IsHealthy} from "../src/IsHealthy.sol";
+import {LendingPoolDeployer} from "../src/LendingPoolDeployer.sol";
+import {LendingPoolFactory} from "../src/LendingPoolFactory.sol";
+import {LendingPool} from "../src/LendingPool.sol";
+import {Position} from "../src/Position.sol";
+import {Pricefeed} from "../src/Pricefeed.sol";
 
 contract CaerScript is Script {
     HelperTestnet public helperTestnet;
@@ -192,7 +192,9 @@ contract CaerScript is Script {
         } else if (block.chainid == ORIGIN_chainId && isDeployed) {
             ///* 1.DEPLOY HYPERLANE TO DESTINATION CHAIN
             ///* 2.DEPLOY RECEIVER
-            if (DESTINATION_chainId == 421614 || DESTINATION_chainId == 128123 || DESTINATION_chainId == 84532) revert("Deployed");
+            if (DESTINATION_chainId == 421614 || DESTINATION_chainId == 128123 || DESTINATION_chainId == 84532) {
+                revert("Deployed");
+            }
             pairBridgeToToken(ORIGIN_helperTestnet, ORIGIN_mockUSDC, UsdcBridgeTokenReceiver, DESTINATION_chainId);
             pairBridgeToToken(ORIGIN_helperTestnet, ORIGIN_mockUSDT, UsdtBridgeTokenReceiver, DESTINATION_chainId);
             pairBridgeToToken(ORIGIN_helperTestnet, ORIGIN_mockWAVAX, WavaxBridgeTokenReceiver, DESTINATION_chainId);

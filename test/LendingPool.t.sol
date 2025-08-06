@@ -3,20 +3,20 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {LendingPoolDeployer} from "../../src/ccip/LendingPoolDeployer.sol";
-import {LendingPoolFactory} from "../../src/ccip/LendingPoolFactory.sol";
-import {LendingPool} from "../../src/ccip/LendingPool.sol";
-import {Position} from "../../src/ccip/Position.sol";
-import {MockUSDC} from "../../src/ccip/mocks/MockUSDC.sol";
-import {MockUSDT} from "../../src/ccip/mocks/MockUSDT.sol";
-import {MockWBTC} from "../../src/ccip/mocks/MockWBTC.sol";
-import {MockWETH} from "../../src/ccip/mocks/MockWETH.sol";
-import {MockWAVAX} from "../../src/ccip/mocks/MockWAVAX.sol";
-import {Helper} from "../../src/ccip/Helper.sol";
-import {IsHealthy} from "../../src/ccip/IsHealthy.sol";
-import {Protocol} from "../../src/ccip/Protocol.sol";
+import {LendingPoolDeployer} from "../src/LendingPoolDeployer.sol";
+import {LendingPoolFactory} from "../src/LendingPoolFactory.sol";
+import {LendingPool} from "../src/LendingPool.sol";
+import {Position} from "../src/Position.sol";
+import {MockUSDC} from "../src/mocks/MockUSDC.sol";
+import {MockUSDT} from "../src/mocks/MockUSDT.sol";
+import {MockWBTC} from "../src/mocks/MockWBTC.sol";
+import {MockWETH} from "../src/mocks/MockWETH.sol";
+import {MockWAVAX} from "../src/mocks/MockWAVAX.sol";
+import {HelperTestnet} from "../src/HelperTestnet.sol";
+import {IsHealthy} from "../src/IsHealthy.sol";
+import {Protocol} from "../src/Protocol.sol";
 
-contract LendingPoolFactoryCCIPTest is Test {
+contract LendingPoolFactoryHyperlaneTest is Test {
     IsHealthy public isHealthy;
     LendingPoolDeployer public lendingPoolDeployer;
     LendingPoolFactory public lendingPoolFactory;
@@ -28,6 +28,7 @@ contract LendingPoolFactoryCCIPTest is Test {
     MockUSDT public usdt;
     MockWAVAX public wavax;
     Protocol public protocol;
+    HelperTestnet public helperTestnet;
 
     address public owner = makeAddr("owner");
 
@@ -40,49 +41,40 @@ contract LendingPoolFactoryCCIPTest is Test {
     address public ArbUsdcUsd = 0x0153002d20B96532C639313c2d54c3dA09109309;
     address public ArbUsdtUsd = 0x80EDee6f667eCc9f63a0a6f55578F870651f06A4;
 
-    address public AvaxBtcUsd = 0x31CF013A08c6Ac228C94551d535d5BAfE19c602a;
-    address public AvaxEthUsd = 0x86d67c3D38D2bCeE722E601025C25a575021c6EA;
-    address public AvaxAvaxUsd = 0x5498BB86BC934c8D34FDA08E81D444153d0D06aD;
-    address public AvaxUsdcUsd = 0x97FE42a7E96640D932bbc0e1580c73E705A8EB73;
-    address public AvaxUsdtUsd = 0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad;
-
-    address public basicTokenSenderETHSEPOLIA = 0xe1964f7Fa5225a0596360bB5885d63186df752EB;
-    address public basicTokenSenderAVAXFUJI = 0x174Ec8bAD0CDc86B0b09d2fF821F4DbD6e3a0a58;
-    address public basicTokenSenderARBSEPOLIA = 0xf38E89B07eBFAe0fC59647D198Dd077267E8CA7E;
-    address public basicTokenSenderBASESEPOLIA = 0x8751aF34d18d195DF87f7dF710662eD53d49222E;
-
-    uint256 public chainId = 43113;
+    uint256 public chainId = 421614;
 
     bool priceFeedIsActive = false;
 
-    function setUp() public {
-        usdc = new MockUSDC();
-        usdt = new MockUSDT();
-        wbtc = new MockWBTC();
-        weth = new MockWETH();
-        wavax = new MockWAVAX();
+    // RUN
+    // forge test --match-contract LendingPoolFactoryHyperlaneTest
 
+    function setUp() public {
         vm.startPrank(alice);
         // vm.createSelectFork("https://api.avax-test.network/ext/bc/C/rpc");
         vm.createSelectFork(vm.rpcUrl("arb_sepolia"));
 
         isHealthy = new IsHealthy();
-        protocol = new Protocol(address(alice));
-        lendingPoolDeployer = new LendingPoolDeployer(address(alice));
-        lendingPoolFactory = new LendingPoolFactory(address(isHealthy), address(lendingPoolDeployer), address(protocol));
+        lendingPoolDeployer = new LendingPoolDeployer();
+        protocol = new Protocol();
+        helperTestnet = new HelperTestnet();
+
+        usdc = new MockUSDC(address(helperTestnet));
+        usdt = new MockUSDT(address(helperTestnet));
+        wbtc = new MockWBTC(address(helperTestnet));
+        weth = new MockWETH(address(helperTestnet));
+        wavax = new MockWAVAX(address(helperTestnet));
+
+        lendingPoolFactory = new LendingPoolFactory(
+            address(isHealthy), address(lendingPoolDeployer), address(protocol), address(helperTestnet)
+        );
         lendingPool = new LendingPool(address(weth), address(usdc), address(lendingPoolFactory), 7e17);
         position = new Position(address(weth), address(usdc), address(lendingPool), address(lendingPoolFactory));
 
-        lendingPoolFactory.addBasicTokenSender(11155111, basicTokenSenderETHSEPOLIA);
-        lendingPoolFactory.addBasicTokenSender(43113, basicTokenSenderAVAXFUJI);
-        lendingPoolFactory.addBasicTokenSender(421614, basicTokenSenderARBSEPOLIA);
-        lendingPoolFactory.addBasicTokenSender(84532, basicTokenSenderBASESEPOLIA);
-
-        lendingPoolFactory.addTokenDataStream(address(wbtc), AvaxBtcUsd);
-        lendingPoolFactory.addTokenDataStream(address(weth), AvaxEthUsd);
-        lendingPoolFactory.addTokenDataStream(address(wavax), AvaxAvaxUsd);
-        lendingPoolFactory.addTokenDataStream(address(usdc), AvaxUsdcUsd);
-        lendingPoolFactory.addTokenDataStream(address(usdt), AvaxUsdtUsd);
+        lendingPoolFactory.addTokenDataStream(address(wbtc), ArbBtcUsd);
+        lendingPoolFactory.addTokenDataStream(address(weth), ArbEthUsd);
+        lendingPoolFactory.addTokenDataStream(address(wavax), ArbAvaxUsd);
+        lendingPoolFactory.addTokenDataStream(address(usdc), ArbUsdcUsd);
+        lendingPoolFactory.addTokenDataStream(address(usdt), ArbUsdtUsd);
 
         lendingPoolDeployer.setFactory(address(lendingPoolFactory));
         vm.stopPrank();
@@ -120,7 +112,7 @@ contract LendingPoolFactoryCCIPTest is Test {
         vm.startPrank(bob);
         IERC20(address(weth)).approve(address(lendingPool), 150e18);
         lendingPool.supplyCollateral(150e18);
-        lendingPool.borrowDebt(500e6, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        lendingPool.borrowDebt(500e6, chainId, 0);
         vm.stopPrank();
     }
 
@@ -149,9 +141,9 @@ contract LendingPoolFactoryCCIPTest is Test {
         lendingPool.supplyCollateral(1e18);
 
         vm.expectRevert(IsHealthy.InsufficientCollateral.selector);
-        lendingPool.borrowDebt(3000e6, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        lendingPool.borrowDebt(3000e6, chainId, 0);
 
-        lendingPool.borrowDebt(100e6, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        lendingPool.borrowDebt(100e6, chainId, 0);
 
         assertEq(lendingPool.userBorrowShares(bob), 100e6);
         vm.stopPrank();
@@ -176,11 +168,11 @@ contract LendingPoolFactoryCCIPTest is Test {
 
         // Expect BorrowDebtCrosschain event
         vm.expectEmit(true, true, false, true, address(lendingPool));
-        emit LendingPool.BorrowDebtCrosschain(bob, borrowed, borrowed, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        emit LendingPool.BorrowDebtCrosschain(bob, borrowed, borrowed, chainId, 0);
 
         // Bob borrows USDC
         uint256 protocolFee = (borrowed * 1e15) / 1e18;
-        lendingPool.borrowDebt(borrowed, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        lendingPool.borrowDebt(borrowed, chainId, 0);
 
         // Record Bob's balances after
         uint256 tempBobBalanceUSDC2 = IERC20(address(usdc)).balanceOf(bob);
@@ -202,7 +194,7 @@ contract LendingPoolFactoryCCIPTest is Test {
         // IERC20(address(weth)).approve(address(lendingPool), 20e18);
         // lendingPool.supplyCollateral(20e18);
         // vm.expectRevert(LendingPool.InsufficientLiquidity.selector);
-        // lendingPool.borrowDebt(20_000e6, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        // lendingPool.borrowDebt(20_000e6, chainId, 0);
         // vm.stopPrank();
 
         // Try to borrow with zero collateral (should revert if enforced)
@@ -213,7 +205,7 @@ contract LendingPoolFactoryCCIPTest is Test {
         lendingPool.createPosition();
         // No collateral supplied
         vm.expectRevert(LendingPool.InsufficientCollateral.selector); // Should revert due to insufficient collateral or similar
-        lendingPool.borrowDebt(100e6, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        lendingPool.borrowDebt(100e6, chainId, 0);
         vm.stopPrank();
     }
 
@@ -510,7 +502,7 @@ contract LendingPoolFactoryCCIPTest is Test {
 
         console.log("bob balance usdc before borrow", IERC20(address(usdc)).balanceOf(bob));
         console.log("--------------------------------");
-        lendingPool.borrowDebt(700e6, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        lendingPool.borrowDebt(700e6, chainId, 0);
         console.log("bob balance usdc after borrow", IERC20(address(usdc)).balanceOf(bob));
         console.log("--------------------------------");
 
@@ -559,7 +551,7 @@ contract LendingPoolFactoryCCIPTest is Test {
         console.log("Bob supply Assets 5eth", IERC20(address(weth)).balanceOf(lendingPool.addressPositions(bob)));
         console.log("----------------------------------------------------------------");
 
-        lendingPool.borrowDebt(500e6, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        lendingPool.borrowDebt(500e6, chainId, 0);
         console.log("----------------------------------------------------------------");
         console.log("Bob borrow shares", lendingPool.userBorrowShares(bob));
         console.log("Bob borrow assets", lendingPool.totalBorrowAssets());
@@ -594,7 +586,7 @@ contract LendingPoolFactoryCCIPTest is Test {
         console.log("----------------------------------------------------------------");
         vm.warp(block.timestamp + 365 days);
 
-        lendingPool.borrowDebt(100e6, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        lendingPool.borrowDebt(100e6, chainId, 0);
         console.log("----------------------------------------------------------------");
         console.log("Bob weth", IERC20(address(weth)).balanceOf(lendingPool.addressPositions(bob)));
         console.log("Bob borrow shares", lendingPool.userBorrowShares(bob));
@@ -625,7 +617,7 @@ contract LendingPoolFactoryCCIPTest is Test {
         IERC20(address(weth)).approve(address(lendingPool), 10e18);
         lendingPool.supplyCollateral(10e18);
         assertEq(IERC20(address(weth)).balanceOf(lendingPool.addressPositions(bob)), 10e18);
-        lendingPool.borrowDebt(2000e6, chainId, Helper.SupportedNetworks.AVALANCHE_FUJI);
+        lendingPool.borrowDebt(2000e6, chainId, 0);
         assertEq(lendingPool.userBorrowShares(bob), 2000e6);
 
         // vm.expectRevert(LendingPool.PositionUnavailable.selector);

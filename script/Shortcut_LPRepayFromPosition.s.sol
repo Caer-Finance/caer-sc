@@ -5,9 +5,9 @@ import {Script, console} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {Helper} from "./Helper.sol";
-import {ILendingPool} from "../../src/hyperlane/interfaces/ILendingPool.sol";
+import {ILendingPool} from "../src/interfaces/ILendingPool.sol";
 
-contract LPRepayScript is Script, Helper {
+contract LPRepayFromPositionScript is Script, Helper {
     // --------- FILL THIS ----------
     address public yourWallet = vm.envAddress("ADDRESS");
     uint256 public amount = 1;
@@ -26,6 +26,7 @@ contract LPRepayScript is Script, Helper {
         address borrowToken = ILendingPool(ORIGIN_lendingPool).borrowToken();
         uint256 decimals = 10 ** IERC20Metadata(borrowToken).decimals();
         uint256 amountToPay = amount * decimals;
+
         uint256 debtBefore = ILendingPool(ORIGIN_lendingPool).userBorrowShares(yourWallet);
         console.log("debtBefore", debtBefore);
         vm.startBroadcast(privateKey);
@@ -35,13 +36,13 @@ contract LPRepayScript is Script, Helper {
                 / ILendingPool(ORIGIN_lendingPool).totalBorrowAssets()
         );
         IERC20(borrowToken).approve(ORIGIN_lendingPool, amountToPay + 1e6);
-        ILendingPool(ORIGIN_lendingPool).repayWithSelectedToken(shares, address(ORIGIN_USDC), false);
+        ILendingPool(ORIGIN_lendingPool).repayWithSelectedToken(shares, address(ORIGIN_USDC), true);
         uint256 debtAfter = ILendingPool(ORIGIN_lendingPool).userBorrowShares(yourWallet);
-        console.log("-------------------------------- repay --------------------------------");
+        console.log("-------------------------------- repay from position --------------------------------");
         console.log("debtAfter", debtAfter);
         vm.stopBroadcast();
     }
 
     // RUN
-    // forge script LPRepayScript -vvv --broadcast
+    // forge script LPRepayFromPositionScript -vvv --broadcast
 }

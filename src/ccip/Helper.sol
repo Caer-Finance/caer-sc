@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 contract Helper {
-    // Supported Networks
+    // Supported Networksss
     enum SupportedNetworks {
         ETHEREUM_SEPOLIA, // 0
         AVALANCHE_FUJI, // 1
