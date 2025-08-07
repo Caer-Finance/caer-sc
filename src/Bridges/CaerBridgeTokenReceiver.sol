@@ -2,8 +2,8 @@
 pragma solidity ^0.8.17;
 
 import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
-import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
-import {IHelperTestnet} from "./interfaces/IHelperTestnet.sol";
+import {ITokenSwap} from "../interfaces/ITokenSwap.sol";
+import {IHelperTestnet} from "../interfaces/IHelperTestnet.sol";
 import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
 
 contract CaerBridgeTokenReceiver is IMessageRecipient, Ownable {

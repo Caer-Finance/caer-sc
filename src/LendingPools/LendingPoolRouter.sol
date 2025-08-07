@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IFactory} from "./interfaces/IFactory.sol";
-import {IIsHealthy} from "./interfaces/IIsHealthy.sol";
-import {Position} from "./Position.sol";
+import {IFactory} from "../Interfaces/IFactory.sol";
+import {IIsHealthy} from "../Interfaces/IIsHealthy.sol";
+import {Position} from "../Position.sol";
 
 // TODO: Mint Token from total assets
 contract LendingPoolRouter {

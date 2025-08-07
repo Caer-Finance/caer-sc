@@ -2,20 +2,20 @@
 pragma solidity ^0.8.20;
 
 import {Script, console} from "forge-std/Script.sol";
-import {MockUSDC} from "../src/mocks/MockUSDC.sol";
-import {MockUSDT} from "../src/mocks/MockUSDT.sol";
-import {MockWAVAX} from "../src/mocks/MockWAVAX.sol";
+import {MockUSDC} from "../src/Mocks/MockUSDC.sol";
+import {MockUSDT} from "../src/Mocks/MockUSDT.sol";
+import {MockWAVAX} from "../src/Mocks/MockWAVAX.sol";
 import {HelperTestnet} from "../src/HelperTestnet.sol";
-import {CaerBridgeTokenSender} from "../src/CaerBridgeTokenSender.sol";
-import {CaerBridgeTokenReceiver} from "../src/CaerBridgeTokenReceiver.sol";
-import {MockWBTC} from "../src/mocks/MockWBTC.sol";
-import {MockWETH} from "../src/mocks/MockWETH.sol";
+import {CaerBridgeTokenSender} from "../src/Bridges/CaerBridgeTokenSender.sol";
+import {CaerBridgeTokenReceiver} from "../src/Bridges/CaerBridgeTokenReceiver.sol";
+import {MockWBTC} from "../src/Mocks/MockWBTC.sol";
+import {MockWETH} from "../src/Mocks/MockWETH.sol";
 
 import {Protocol} from "../src/Protocol.sol";
 import {IsHealthy} from "../src/IsHealthy.sol";
-import {LendingPoolDeployer} from "../src/LendingPoolDeployer.sol";
-import {LendingPoolFactory} from "../src/LendingPoolFactory.sol";
-import {LendingPool} from "../src/LendingPool.sol";
+import {LendingPoolDeployer} from "../src/LendingPools/LendingPoolDeployer.sol";
+import {LendingPoolFactory} from "../src/LendingPools/LendingPoolFactory.sol";
+import {LendingPool} from "../src/LendingPools/LendingPool.sol";
 import {Position} from "../src/Position.sol";
 import {Pricefeed} from "../src/Pricefeed.sol";
 

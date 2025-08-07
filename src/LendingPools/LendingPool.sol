@@ -5,13 +5,13 @@ import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
-import {IFactory} from "./interfaces/IFactory.sol";
-import {IPosition} from "./interfaces/IPosition.sol";
-import {ICaerBridgeTokenSender} from "./interfaces/ICaerBridgeTokenSender.sol";
-import {IHelperTestnet} from "./interfaces/IHelperTestnet.sol";
-import {ILPRouter} from "./interfaces/ILPRouter.sol";
-import {IBridgeRouter} from "./interfaces/IBridgeRouter.sol";
-import {ILPRouterDeployer} from "./interfaces/ILPRouterDeployer.sol";
+import {IFactory} from "../Interfaces/IFactory.sol";
+import {IPosition} from "../Interfaces/IPosition.sol";
+import {ICaerBridgeTokenSender} from "../Interfaces/ICaerBridgeTokenSender.sol";
+import {IHelperTestnet} from "../Interfaces/IHelperTestnet.sol";
+import {ILPRouter} from "../Interfaces/ILPRouter.sol";
+import {IBridgeRouter} from "../Interfaces/IBridgeRouter.sol";
+import {ILPRouterDeployer} from "../Interfaces/ILPRouterDeployer.sol";
 
 // TODO: Mint Token
 contract LendingPool is ReentrancyGuard {

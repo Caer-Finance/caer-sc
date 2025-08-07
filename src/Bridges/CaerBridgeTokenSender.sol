@@ -4,10 +4,10 @@ pragma solidity ^0.8.20;
 import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
 import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {IHelperTestnet} from "./interfaces/IHelperTestnet.sol";
-import {ITokenSwap} from "./interfaces/ITokenSwap.sol";
 import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
-import {IFactory} from "./interfaces/IFactory.sol";
+import {IHelperTestnet} from "../interfaces/IHelperTestnet.sol";
+import {ITokenSwap} from "../interfaces/ITokenSwap.sol";
+import {IFactory} from "../interfaces/IFactory.sol";
 
 contract CaerBridgeTokenSender is Ownable {
     error SameChain();
