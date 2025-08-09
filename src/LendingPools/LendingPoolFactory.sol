@@ -2,6 +2,9 @@
 pragma solidity ^0.8.13;
 
 import {ILPDeployer} from "../interfaces/ILPDeployer.sol";
+import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
+import {ICreateLendingPoolBridgeRouter} from "../interfaces/ICreateLendingPoolBridgeRouter.sol";
+import {ICreateLendingPoolOrigin} from "../interfaces/ICreateLendingPoolOrigin.sol";
 
 /**
  * @title LendingPoolFactory
@@ -11,7 +14,7 @@ import {ILPDeployer} from "../interfaces/ILPDeployer.sol";
  * It maintains a registry of all created pools and manages token data streams
  * and cross-chain token senders.
  */
-contract LendingPoolFactory {
+contract LendingPoolFactory is Ownable {
     error OnlyOwner();
 
     /**
@@ -40,6 +43,14 @@ contract LendingPoolFactory {
     event BasicTokenSenderAdded(uint256 indexed chainId, address indexed basicTokenSender);
 
     /**
+     * @notice Emitted when a pool is set for other chains
+     * @param originPool The address of the origin pool
+     * @param chainId The chain ID where the pool is set
+     * @param lendingPoolAddress The address of the lending pool
+     */
+    event PoolOtherChainsSet(address indexed originPool, uint256 indexed chainId, address indexed lendingPoolAddress);
+
+    /**
      * @notice Structure representing a lending pool
      * @param collateralToken The address of the collateral token
      * @param borrowToken The address of the borrow token
@@ -52,8 +63,10 @@ contract LendingPoolFactory {
         address lendingPoolAddress;
     }
 
-    /// @notice The owner of the factory contract
-    address public owner;
+    struct CrosschainPool {
+        uint256 chainId;
+        address lendingPoolAddress;
+    }
 
     /// @notice The address of the IsHealthy contract for health checks
     address public isHealthy;
@@ -71,13 +84,18 @@ contract LendingPoolFactory {
     address public helper;
 
     /// @notice The address of the bridge router contract
-    address public bridgeRouter;
+    address public tokenBridgeRouter;
+
+    /// @notice The address of the lp bridge router contract
+    address public lpBridgeRouter;
+
+    /// @notice Array of all created pools
+    Pool[] public pools;
 
     /// @notice Mapping from token address to its data stream address
     mapping(address => address) public tokenDataStream;
 
-    /// @notice Array of all created pools
-    Pool[] public pools;
+    mapping(address => CrosschainPool[]) public poolOtherChains;
 
     /// @notice Total number of pools created
     uint256 public poolCount;
@@ -93,28 +111,21 @@ contract LendingPoolFactory {
         address _lendingPoolRouterDeployer,
         address _protocol,
         address _helper,
-        address _bridgeRouter
-    ) {
-        owner = msg.sender;
-        lendingPoolRouterDeployer = _lendingPoolRouterDeployer;
-        lendingPoolDeployer = _lendingPoolDeployer;
+        address _tokenBridgeRouter,
+        address _lpBridgeRouter
+    ) Ownable(msg.sender) {
         isHealthy = _isHealthy;
+        lendingPoolDeployer = _lendingPoolDeployer;
+        lendingPoolRouterDeployer = _lendingPoolRouterDeployer;
         protocol = _protocol;
         helper = _helper;
-        bridgeRouter = _bridgeRouter;
+        tokenBridgeRouter = _tokenBridgeRouter;
+        lpBridgeRouter = _lpBridgeRouter;
     }
 
     /**
      * @notice Modifier to restrict function access to the owner only
      */
-    modifier onlyOwner() {
-        _onlyOwner();
-        _;
-    }
-
-    function _onlyOwner() internal view {
-        if (msg.sender != owner) revert OnlyOwner();
-    }
 
     /**
      * @notice Creates a new lending pool with the specified parameters
@@ -125,15 +136,33 @@ contract LendingPoolFactory {
      * @dev This function deploys a new lending pool using the lending pool deployer
      * and adds it to the pools registry
      */
-    function createLendingPool(address collateralToken, address borrowToken, uint256 ltv) public returns (address) {
+    function createLendingPool(address collateralToken, address borrowToken, uint256 ltv, uint256[] memory _chainIds)
+        public
+        payable
+        returns (address)
+    {
         address lendingPool = ILPDeployer(lendingPoolDeployer).deployLendingPool(collateralToken, borrowToken, ltv);
 
         pools.push(Pool(collateralToken, borrowToken, address(lendingPool)));
         poolCount++;
+
+        setPoolOtherChains(address(lendingPool), block.chainid, address(lendingPool));
+
+        address senderBridge = ICreateLendingPoolBridgeRouter(tokenBridgeRouter).senderBridges(block.chainid);
+
+        ICreateLendingPoolOrigin(senderBridge).createLendingPool{value: msg.value}(
+            address(lendingPool), collateralToken, borrowToken, ltv, _chainIds
+        );
+
         emit LendingPoolCreated(collateralToken, borrowToken, address(lendingPool), ltv);
         return address(lendingPool);
     }
 
+    function getPoolLength() public view returns (uint256) {
+        return pools.length;
+    }
+
+    // ****************** OWNER AREA ******************
     /**
      * @notice Adds a token data stream for price feeds and other data
      * @param _token The address of the token
@@ -143,10 +172,6 @@ contract LendingPoolFactory {
     function addTokenDataStream(address _token, address _dataStream) public onlyOwner {
         tokenDataStream[_token] = _dataStream;
         emit TokenDataStreamAdded(_token, _dataStream);
-    }
-
-    function getPoolLength() public view returns (uint256) {
-        return pools.length;
     }
 
     function updateLendingPoolRouterDeployer(address _lendingPoolRouterDeployer) public onlyOwner {
@@ -169,7 +194,30 @@ contract LendingPoolFactory {
         helper = _helper;
     }
 
-    function updateBridgeRouter(address _bridgeRouter) public onlyOwner {
-        bridgeRouter = _bridgeRouter;
+    function updateTokenBridgeRouter(address _tokenBridgeRouter) public onlyOwner {
+        tokenBridgeRouter = _tokenBridgeRouter;
+    }
+
+    function updateLpBridgeRouter(address _lpBridgeRouter) public onlyOwner {
+        lpBridgeRouter = _lpBridgeRouter;
+    }
+    // ************************************************
+
+    function setPoolOtherChains(address _originPool, uint256 _chainId, address _lendingPoolAddress) public {
+        if (poolOtherChains[_originPool].length == 0) {
+            poolOtherChains[_originPool].push(CrosschainPool(_chainId, _lendingPoolAddress));
+        } else {
+            for (uint256 i = 0; i < poolOtherChains[_originPool].length; i++) {
+                if (poolOtherChains[_originPool][i].chainId != _chainId) {
+                    poolOtherChains[_originPool].push(CrosschainPool(_chainId, _lendingPoolAddress));
+                    break;
+                }
+            }
+        }
+        emit PoolOtherChainsSet(_originPool, _chainId, _lendingPoolAddress);
+    }
+
+    function getPoolOtherChainsLength(address _originPool) public view returns (uint256) {
+        return poolOtherChains[_originPool].length;
     }
 }

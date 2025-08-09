@@ -16,7 +16,9 @@ docs/
 /src/layerzero/
 /src/ccip/
 /src/learn-hyperlane/
+/src/Playground/
 
 /script/BridgeTokenReceiver.s.sol
 /script/BridgeTokenSender.s.sol
 /script/Shortcut_Bridge.s.sol
+/script/Playground/

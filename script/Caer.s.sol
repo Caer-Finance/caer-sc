@@ -156,6 +156,7 @@ contract CaerScript is Script {
                 address(0),
                 address(protocol),
                 address(helperTestnet),
+                address(0),
                 address(0)
             );
             lendingPool = new LendingPool(
@@ -272,4 +273,5 @@ contract CaerScript is Script {
 
     // RUN
     // forge script CaerScript --broadcast -vvv --verify
+    // configin token
 }
