@@ -44,10 +44,10 @@ contract CreateLendingPoolOrigin is IMessageRecipient, Ownable {
         address _borrowToken,
         uint256 _ltv,
         uint256[] memory _destinationChainIds
-    ) external payable onlyFactory {
+    ) external payable {
         address helperTestnet = IFactory(factory).helper();
         for (uint256 i = 0; i < _destinationChainIds.length; i++) {
-            if (_destinationChainIds[i] != 0) {
+            if (_destinationChainIds[i] != 0 && _destinationChainIds[i] != block.chainid) {
                 IHelperTestnet.ChainInfo memory helperDestination =
                     IHelperTestnet(helperTestnet).chains(_destinationChainIds[i]); // ** OTHER CHAIN
                 IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);

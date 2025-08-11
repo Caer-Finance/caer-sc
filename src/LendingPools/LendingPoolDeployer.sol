@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import {LendingPool} from "./LendingPool.sol";
-import {IFactory} from "../Interfaces/IFactory.sol";
 import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
@@ -52,18 +51,18 @@ contract LendingPoolDeployer is Ownable {
      *
      * @custom:security This function should only be called by the factory contract
      */
-    function deployLendingPool(address _collateralToken, address _borrowToken, uint256 _ltv)
+    function deployLendingPool(address _collateralToken, address _borrowToken, uint256 _ltv, uint256[] memory _chainIds)
         public
         onlyFactory
         returns (address)
     {
         LendingPool lendingPool =
-            new LendingPool(_collateralToken, _borrowToken, factory, IFactory(factory).protocol(), _ltv);
+            new LendingPool(_collateralToken, _borrowToken, factory, _ltv, _chainIds);
         return address(lendingPool);
     }
 
     function setFactory(address _factory) public onlyOwner {
-        if (_factory == address(0)) revert InvalidFactoryAddress();
+        // if (_factory == address(0)) revert InvalidFactoryAddress();
         factory = _factory;
     }
 }

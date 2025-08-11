@@ -46,7 +46,7 @@ contract LendingPoolRouterDeployer is Ownable {
         address _collateralToken,
         address _borrowToken,
         uint256 _ltv
-    ) public onlyFactory returns (address) {
+    ) public returns (address) {
         LendingPoolRouter lendingPoolRouter =
             new LendingPoolRouter(_lendingPool, _factory, _collateralToken, _borrowToken, _ltv);
         return address(lendingPoolRouter);

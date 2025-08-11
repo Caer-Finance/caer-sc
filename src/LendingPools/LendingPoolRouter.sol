@@ -82,7 +82,7 @@ contract LendingPoolRouter {
         return amount;
     }
 
-    function withdrawCollateral(address _user) public onlyLendingPool view {
+    function withdrawCollateral(address _user) public view onlyLendingPool {
         address isHealthy = IFactory(factory).isHealthy();
         if (userBorrowShares[_user] > 0) {
             IIsHealthy(isHealthy)._isHealthy(
@@ -168,5 +168,17 @@ contract LendingPoolRouter {
         Position position = new Position(collateralToken, borrowToken, address(this), factory);
         addressPositions[_user] = address(position);
         return address(position);
+    }
+
+    function refundWithdrawLiquidity(uint256 _shares, address _user) public onlyLendingPool returns (uint256 amount) {
+        if (_shares == 0) revert ZeroAmount();
+
+        amount = ((_shares * totalSupplyAssets) / totalSupplyShares);
+
+        userSupplyShares[_user] += _shares;
+        totalSupplyShares += _shares;
+        totalSupplyAssets += amount;
+
+        return amount;
     }
 }

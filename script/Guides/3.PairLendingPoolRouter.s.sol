@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 import {ICreateLendingPoolBridgeRouter} from "../../src/interfaces/ICreateLendingPoolBridgeRouter.sol";
-import {ILPDeployer} from "../../src/interfaces/ILPDeployer.sol";
+// import {ILPDeployer} from "../../src/interfaces/ILPDeployer.sol";
 
 contract PairLendingPoolRouterScript is Script {
     // ARB -> RPC (BASE) - Using ARB addresses since we're connecting to ARB
@@ -68,7 +68,7 @@ contract PairLendingPoolRouterScript is Script {
         ICreateLendingPoolBridgeRouter(createLendingPoolBridgeRouter).setReceiverBridge(
             chainId, createLendingPoolDestination
         );
-        ICreateLendingPoolBridgeRouter(createLendingPoolBridgeRouter).setSenderBridge(chainId, createLendingPoolOrigin);
+        ICreateLendingPoolBridgeRouter(createLendingPoolBridgeRouter).setOriginBridge(chainId, createLendingPoolOrigin);
 
         console.log("Successfully configured bridge for chain:", chainId);
 

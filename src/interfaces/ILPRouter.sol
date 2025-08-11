@@ -26,4 +26,5 @@ interface ILPRouter {
         returns (uint256 protocolFee, uint256 userAmount, uint256 shares);
     function repayWithSelectedToken(uint256 shares, address user) external returns (uint256 borrowAmount);
     function createPosition(address user) external returns (address);
+    function refundWithdrawLiquidity(uint256 shares, address user) external;
 }

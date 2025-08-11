@@ -61,7 +61,7 @@ contract LendingPoolFactoryScript is Script {
         createLendingPoolDestination = new CreateLendingPoolDestination(address(lendingPoolFactory));
         configureLendingPool = new ConfigureLendingPool(address(lendingPoolFactory));
 
-        ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).setSenderBridge(
+        ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).setOriginBridge(
             block.chainid, address(createLendingPoolOrigin)
         );
 
@@ -87,8 +87,8 @@ contract LendingPoolFactoryScript is Script {
         );
         console.log("createLendingPoolOrigin", address(createLendingPoolOrigin));
         console.log(
-            "read sender bridge",
-            ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).senderBridges(block.chainid)
+            "read origin bridge",
+            ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).originBridges(block.chainid)
         );
         console.log("configureLendingPool", address(configureLendingPool));
         console.log(
@@ -104,14 +104,14 @@ contract LendingPoolFactoryScript is Script {
     //   createLendingPoolBridgeRouter 0x4CE760CcD533eeaFDBDf821f7dc390243bdef74d
     //   lendingPoolFactory 0x82EFAac5a7Efab5f1Db76cD932802067e8e8e1a7
     //   createLendingPoolOrigin 0x45115b5A7631491DD2Fa3e9109898aBf936956AE
-    //   read sender bridge 0x45115b5A7631491DD2Fa3e9109898aBf936956AE
+    //   read origin bridge 0x45115b5A7631491DD2Fa3e9109898aBf936956AE
 
     // ARB
     //   helperTestnet 0xb4F8A55030a9e2b3B52d6267223915846eB2d3EC
     //   createLendingPoolBridgeRouter 0x2e373EcA4A1d1647694B3722656D16156cbB5750
     //   lendingPoolFactory 0x1F24E44Dd63c3fc1953b12De683ceBDC05F14717
     //   createLendingPoolOrigin 0x08F26e6C5919035fce98a2275c3CcEA09ac9029a
-    //   read sender bridge 0x08F26e6C5919035fce98a2275c3CcEA09ac9029a
+    //   read origin bridge 0x08F26e6C5919035fce98a2275c3CcEA09ac9029a
 
     // TODO:
     // - set configure bridge both origin / destination to lpbridgerouter

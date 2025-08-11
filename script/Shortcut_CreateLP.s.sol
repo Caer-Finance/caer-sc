@@ -8,7 +8,7 @@ interface IAccountRouter {
     function unenrollRemoteRouterAndIsm(uint32 _destinationDomain) external;
 }
 
-contract ShortcutEnrollRemoteISM is Script {
+contract ShortcutCreateLP is Script {
     address public baseSepoliaAccountRouter = 0x677a021bdf36a7409D02A974cb6E19EE4c2F0632;
     address public baseSepoliaIsm = 0x924fF8657070da8e038F0B5867e09aFd7c46D1A9;
 

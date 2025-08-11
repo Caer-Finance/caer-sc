@@ -10,7 +10,7 @@ interface ILendingPool {
     // ** WRITE
     function createPosition() external;
     function supplyLiquidity(uint256 _amount) external;
-    function withdrawLiquidity(uint256 _shares) external;
+    function withdrawLiquidity(uint256 _shares, address _user, uint256 _chainId, bool _isMailbox) external;
     function supplyCollateral(uint256 _amount) external;
     function withdrawCollateral(uint256 _amount) external;
     function borrowDebt(uint256 _amount, uint256 _chainId) external payable;

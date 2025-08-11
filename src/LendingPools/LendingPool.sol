@@ -12,6 +12,7 @@ import {IHelperTestnet} from "../Interfaces/IHelperTestnet.sol";
 import {ILPRouter} from "../Interfaces/ILPRouter.sol";
 import {IBridgeRouter} from "../Interfaces/IBridgeRouter.sol";
 import {ILPRouterDeployer} from "../Interfaces/ILPRouterDeployer.sol";
+import {ILendingPoolExecuteOrigin} from "../Interfaces/ILendingPoolExecuteOrigin.sol";
 
 // TODO: Mint Token
 contract LendingPool is ReentrancyGuard {
@@ -28,7 +29,7 @@ contract LendingPool is ReentrancyGuard {
     error amountSharesInvalid();
 
     event SupplyLiquidity(address indexed user, uint256 amount, uint256 shares);
-    event WithdrawLiquidity(address indexed user, uint256 amount, uint256 shares);
+    event WithdrawLiquidity(address indexed user, uint256 amount, uint256 shares, uint256 chainId);
     event SupplyCollateral(address indexed user, uint256 amount);
     event RepayWithCollateralByPosition(address indexed user, uint256 amount, uint256 shares);
     event CreatePosition(address indexed user, address indexed positionAddress);
@@ -38,15 +39,22 @@ contract LendingPool is ReentrancyGuard {
 
     address public factory;
     address public router;
-    address public protocol;
 
-    constructor(address _collateralToken, address _borrowToken, address _factory, address _protocol, uint256 _ltv) {
+    uint256[] public chainIds;
+
+    constructor(
+        address _collateralToken,
+        address _borrowToken,
+        address _factory,
+        uint256 _ltv,
+        uint256[] memory _chainIds
+    ) {
+        factory = _factory;
         address lendingPoolRouterDeployer = IFactory(factory).lendingPoolRouterDeployer();
         router = ILPRouterDeployer(lendingPoolRouterDeployer).deployLendingPoolRouter(
             address(this), _factory, _collateralToken, _borrowToken, _ltv
         );
-        factory = _factory;
-        protocol = _protocol;
+        chainIds = _chainIds;
     }
 
     modifier positionRequired() {
@@ -112,12 +120,30 @@ contract LendingPool is ReentrancyGuard {
      * @custom:throws InsufficientLiquidity if protocol lacks liquidity after withdrawal.
      * @custom:emits WithdrawLiquidity when liquidity is withdrawn.
      */
-    function withdrawLiquidity(uint256 _shares) public nonReentrant updateInterest {
+    // TODO: could check shares in other chain && if crosschain only mailbox could do this
+    function withdrawLiquidity(uint256 _shares, address _user, uint256 _chainId, bool _isMailbox)
+        public
+        payable
+        nonReentrant
+        updateInterest
+    {
         if (_shares == 0) revert ZeroAmount();
-        if (_shares > ILPRouter(router).userSupplyShares(msg.sender)) revert InsufficientShares();
-        uint256 amount = ILPRouter(router).withdrawLiquidity(_shares, msg.sender);
-        IERC20(ILPRouter(router).borrowToken()).safeTransfer(msg.sender, amount);
-        emit WithdrawLiquidity(msg.sender, amount, _shares);
+        if (_shares > ILPRouter(router).userSupplyShares(_user) && !_isMailbox) revert InsufficientShares();
+
+        if (_chainId == block.chainid) {
+            uint256 amount = ILPRouter(router).withdrawLiquidity(_shares, _user);
+            IERC20(ILPRouter(router).borrowToken()).safeTransfer(_user, amount);
+            emit WithdrawLiquidity(_user, amount, _shares, _chainId);
+        } else {
+            // CONVERT SHARES TO AMOUNT
+            // PROTECTED FOR TRANSFER ONLY MAILBOX CAN DO THIS
+            _isMailbox
+                ? IERC20(ILPRouter(router).borrowToken()).safeTransfer(_user, _shares)
+                : ILendingPoolExecuteOrigin(factory).execute{value: msg.value}(
+                    _shares, _user, address(this), _chainId, ILendingPoolExecuteOrigin.ExecuteType.WithdrawLiquidity
+                );
+            emit WithdrawLiquidity(_user, _shares, _shares, _chainId);
+        }
     }
 
     /**
@@ -166,7 +192,7 @@ contract LendingPool is ReentrancyGuard {
      */
     function borrowDebt(uint256 _amount, uint256 _chainId) public payable nonReentrant updateInterest {
         if (_amount == 0) revert ZeroAmount();
-
+        address protocol = IFactory(factory).protocol();
         (uint256 protocolFee, uint256 userAmount, uint256 shares) = ILPRouter(router).borrowDebt(_amount, msg.sender);
 
         if (_chainId != block.chainid) {

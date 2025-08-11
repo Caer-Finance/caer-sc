@@ -5,6 +5,8 @@ import {ILPDeployer} from "../interfaces/ILPDeployer.sol";
 import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ICreateLendingPoolBridgeRouter} from "../interfaces/ICreateLendingPoolBridgeRouter.sol";
 import {ICreateLendingPoolOrigin} from "../interfaces/ICreateLendingPoolOrigin.sol";
+// import {IHelperTestnet} from "../interfaces/IHelperTestnet.sol";
+// import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
 
 /**
  * @title LendingPoolFactory
@@ -141,16 +143,20 @@ contract LendingPoolFactory is Ownable {
         payable
         returns (address)
     {
-        address lendingPool = ILPDeployer(lendingPoolDeployer).deployLendingPool(collateralToken, borrowToken, ltv);
+        address lendingPool = ILPDeployer(lendingPoolDeployer).deployLendingPool(collateralToken, borrowToken, ltv, _chainIds);
 
         pools.push(Pool(collateralToken, borrowToken, address(lendingPool)));
         poolCount++;
 
         setPoolOtherChains(address(lendingPool), block.chainid, address(lendingPool));
 
-        address senderBridge = ICreateLendingPoolBridgeRouter(tokenBridgeRouter).senderBridges(block.chainid);
+        address originBridge = ICreateLendingPoolBridgeRouter(lpBridgeRouter).originBridges(block.chainid);
 
-        ICreateLendingPoolOrigin(senderBridge).createLendingPool{value: msg.value}(
+        // TODO: add gas amount
+        // IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(address(helper)).chains(block.chainid);
+        // quoteGasPayment(helperDestination.domainId, 0) 
+        // uint256 gasAmount = IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperOrigin.domainId, 0);
+        ICreateLendingPoolOrigin(originBridge).createLendingPool{value: 0}(
             address(lendingPool), collateralToken, borrowToken, ltv, _chainIds
         );
 

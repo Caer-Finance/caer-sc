@@ -160,7 +160,7 @@ contract CaerScript is Script {
                 address(0)
             );
             lendingPool = new LendingPool(
-                address(mockWETH), address(mockUSDC), address(lendingPoolFactory), address(protocol), 7e17
+                address(mockWETH), address(mockUSDC), address(lendingPoolFactory), 7e17, new uint256[](0)
             );
             position =
                 new Position(address(mockWETH), address(mockUSDC), address(lendingPool), address(lendingPoolFactory));

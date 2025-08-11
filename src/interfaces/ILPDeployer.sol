@@ -6,6 +6,6 @@ interface ILPDeployer {
     function factory() external view returns (address);
 
     // ** WRITE
-    function deployLendingPool(address collateralToken, address borrowToken, uint256 ltv) external returns (address);
+    function deployLendingPool(address collateralToken, address borrowToken, uint256 ltv, uint256[] memory chainIds) external returns (address);
     function setFactory(address factory) external;
 }
