@@ -12,10 +12,8 @@ interface ILendingPoolExecuteOrigin {
     }
 
     function execute(
-        uint256 _shares,
-        address _user,
-        address _lendingPoolOrigin,
-        uint256 _chainId,
+        bytes memory _message,
+        uint256[] memory _chainId,
         ExecuteType _executeType
     ) external payable;
 }

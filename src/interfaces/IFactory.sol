@@ -25,6 +25,7 @@ interface IFactory {
     function poolOtherChains(address _originLendingPool) external view returns (CrosschainPool[] memory);
     function getPoolLength() external view returns (uint256);
     function getPoolOtherChainsLength(address _originLendingPool) external view returns (uint256);
+    function getPoolOtherChainsByChainId(address _originLendingPool, uint256 _chainId) external view returns (address);
 
     // ** WRITE
     function createLendingPool(address _collateralToken, address _borrowToken, uint256 _ltv, uint256[] memory _chainIds)

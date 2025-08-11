@@ -9,6 +9,9 @@ interface ICaerBridgeTokenSender {
     function chainId() external view returns (uint256);
 
     // ** WRITE
-    function bridge(uint256 _amount, address _recipient, address _token) external payable returns (bytes32);
+    function bridge(uint256 _amount, address _recipient, uint256 _shares, address _lendingPoolOrigin, address _lendingPoolDestination)
+        external
+        payable
+        returns (bytes32);
     function setFactory(address _factory) external;
 }

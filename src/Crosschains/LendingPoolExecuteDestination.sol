@@ -7,7 +7,7 @@ import {IFactory} from "../interfaces/IFactory.sol";
 import {IHelperTestnet} from "../interfaces/IHelperTestnet.sol";
 import {ILPRouter} from "../Interfaces/ILPRouter.sol";
 import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
-import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
+import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract LendingPoolExecuteDestination is IMessageRecipient {
     enum ExecuteType {
@@ -21,16 +21,7 @@ contract LendingPoolExecuteDestination is IMessageRecipient {
 
     error NotMailbox();
 
-    event ReceivedMessage(
-        uint32 origin,
-        bytes32 sender,
-        bytes messageBody,
-        uint256 shares,
-        address user,
-        address lendingPoolOrigin,
-        address lendingPoolDestination,
-        ExecuteType executeType
-    );
+    event ReceivedMessage(uint32 origin, bytes32 sender, bytes messageBody);
 
     address public factory;
 
@@ -44,42 +35,37 @@ contract LendingPoolExecuteDestination is IMessageRecipient {
     }
 
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _messageBody) external override onlyMailbox {
-        (
-            uint256 _shares,
-            address _user,
-            address _lendingPoolOrigin,
-            address _lendingPoolDestination,
-            ExecuteType _executeType
-        ) = abi.decode(_messageBody, (uint256, address, address, address, ExecuteType));
+        (bytes memory _message, address _lendingPoolDestination, ExecuteType _executeType) =
+            abi.decode(_messageBody, (bytes, address, ExecuteType));
         if (_executeType == ExecuteType.WithdrawLiquidity) {
-            withdrawLiquidity(_origin, _sender, _messageBody, _shares, _lendingPoolDestination, _user);
+            withdrawLiquidity(_origin, _sender, _message, _lendingPoolDestination);
         }
-        emit ReceivedMessage(
-            _origin, _sender, _messageBody, _shares, _user, _lendingPoolOrigin, _lendingPoolDestination, _executeType
-        );
+        emit ReceivedMessage(_origin, _sender, _messageBody);
     }
 
-    function withdrawLiquidity(
-        uint256 _chainId,
-        bytes32 _sender,
-        bytes calldata _messageBody,
-        uint256 _shares,
-        address _lendingPoolDestination,
-        address _user
-    ) public returns (uint256 amount) {
+    function withdrawLiquidity(uint32 _origin, bytes32 _sender, bytes memory _message, address _lendingPoolDestination)
+        public
+    {
         address router = ILendingPool(_lendingPoolDestination).router();
-        if (
-            _shares > ILPRouter(router).totalSupplyShares()
-                || ILPRouter(router).totalSupplyAssets() < ILPRouter(router).totalBorrowAssets()
-        ) {
-            // balikin ke origin
-            address helperTestnet = IFactory(factory).helper();
-            IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
-            uint256 gasAmount = IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(uint32(_chainId), 0);
-            IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(uint32(_chainId), _sender, _messageBody);
+        (
+            uint256 _amount,
+            ,
+            address _user,
+            uint256 _userSupplyShares,
+            uint256 _totalSupplyShares,
+            uint256 _totalSupplyAssets,
+        ) = abi.decode(_message, (uint256, uint256, address, uint256, uint256, uint256, address));
+        if (_amount > IERC20(ILPRouter(router).borrowToken()).balanceOf(address(this))) {
+            IHelperTestnet.ChainInfo memory helperOrigin =
+                IHelperTestnet(IFactory(factory).helper()).chains(block.chainid);
+            IMailbox(helperOrigin.mailbox).dispatch{value: 0}(
+                uint32(_origin), _sender, abi.encode(_message, _lendingPoolDestination, ExecuteType.WithdrawLiquidity)
+            );
         } else {
-            amount = ((_shares * ILPRouter(router).totalSupplyAssets()) / ILPRouter(router).totalSupplyShares());
-            ILendingPool(_lendingPoolDestination).withdrawLiquidity(_shares, _user, _chainId, true);
+            ILPRouter(router).settlementWithdrawLiquidity(
+                _user, _userSupplyShares, _totalSupplyShares, _totalSupplyAssets
+            );
+            ILendingPool(_lendingPoolDestination).withdrawLiquidity(_amount, _user, uint256(_origin), true);
         }
     }
 

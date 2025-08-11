@@ -226,4 +226,13 @@ contract LendingPoolFactory is Ownable {
     function getPoolOtherChainsLength(address _originPool) public view returns (uint256) {
         return poolOtherChains[_originPool].length;
     }
+
+    function getPoolOtherChainsByChainId(address _originPool, uint256 _chainId) public view returns (address) {
+        for (uint256 i = 0; i < poolOtherChains[_originPool].length; i++) {
+            if (poolOtherChains[_originPool][i].chainId == _chainId) {
+                return poolOtherChains[_originPool][i].lendingPoolAddress;
+            }
+        }
+        return address(0);
+    }
 }

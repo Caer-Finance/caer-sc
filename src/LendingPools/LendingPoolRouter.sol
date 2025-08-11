@@ -24,6 +24,8 @@ contract LendingPoolRouter {
     mapping(address => uint256) public userBorrowShares;
     mapping(address => address) public addressPositions;
 
+    mapping(uint256 => uint256) public otherChainLiquidity;
+
     address public lendingPool;
     address public factory;
 
@@ -170,15 +172,14 @@ contract LendingPoolRouter {
         return address(position);
     }
 
-    function refundWithdrawLiquidity(uint256 _shares, address _user) public onlyLendingPool returns (uint256 amount) {
-        if (_shares == 0) revert ZeroAmount();
-
-        amount = ((_shares * totalSupplyAssets) / totalSupplyShares);
-
-        userSupplyShares[_user] += _shares;
-        totalSupplyShares += _shares;
-        totalSupplyAssets += amount;
-
-        return amount;
+    function settlementWithdrawLiquidity(
+        address _user,
+        uint256 _userSupplyShares,
+        uint256 _totalSupplyShares,
+        uint256 _totalSupplyAssets
+    ) public {
+        userSupplyShares[_user] = _userSupplyShares;
+        totalSupplyShares = _totalSupplyShares;
+        totalSupplyAssets = _totalSupplyAssets;
     }
 }

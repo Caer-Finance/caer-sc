@@ -19,12 +19,7 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
     event ReceivedMessage(
         uint32 origin,
         bytes32 sender,
-        bytes messageBody,
-        uint256 shares,
-        address user,
-        address lendingPool,
-        address lendingPoolDestination,
-        ExecuteType executeType
+        bytes messageBody
     );
 
     enum ExecuteType {
@@ -47,41 +42,32 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
         _;
     }
 
-    function execute(
-        uint256 _shares,
-        address _user,
-        address _lendingPoolOrigin,
-        uint256 _chainId,
-        ExecuteType _executeType
-    ) public payable {
+    function execute(bytes memory _message, uint256[] memory _chainIds, ExecuteType _executeType) public payable {
         if (_executeType == ExecuteType.WithdrawLiquidity) {
-            _withdrawLiquidity(_shares, _user, _lendingPoolOrigin, _chainId);
+            _withdrawLiquidity(_message, _chainIds[0]); // onlyone chainId allowed
         }
+        // else if (_executeType == ExecuteType.BorrowDebt) {
+        //     _borrowDebt(_message, _chainIds[0]);
+        // }
     }
 
-    function _withdrawLiquidity(uint256 _shares, address _user, address _lendingPoolOrigin, uint256 _chainId)
-        internal
-    {
+    function _withdrawLiquidity(bytes memory _message, uint256 _chainId) internal {
         address helperTestnet = IFactory(factory).helper();
         IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainId); // ** OTHER CHAIN
         IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
 
-        address lendingPoolDestination;
-
-        for (uint256 i = 0; i < IFactory(factory).poolOtherChains(_lendingPoolOrigin).length; i++) {
-            if (IFactory(factory).poolOtherChains(_lendingPoolOrigin)[i].chainId == _chainId) {
-                lendingPoolDestination = IFactory(factory).poolOtherChains(_lendingPoolOrigin)[i].lendingPoolAddress;
-            }
-        }
+        (,,,,,,, address _lendingPoolOrigin) =
+            abi.decode(_message, (uint256, uint256, address, uint256, uint256, uint256, uint256, address));
+        address lendingPoolDestination = IFactory(factory).getPoolOtherChainsByChainId(_lendingPoolOrigin, _chainId);
         if (lendingPoolDestination == address(0)) revert LendingPoolNotSet();
 
-        bytes memory message =
-            abi.encode(_shares, _user, _lendingPoolOrigin, lendingPoolDestination, ExecuteType.WithdrawLiquidity);
+        bytes memory message = abi.encode(_message, lendingPoolDestination, ExecuteType.WithdrawLiquidity);
 
         uint256 gasAmount =
             IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
         address executeBridge = ICreateLendingPoolBridgeRouter(factory).executeBridges(_chainId);
         if (executeBridge == address(0)) revert ExecuteBridgeNotSet();
+
         bytes32 executeAddress = bytes32(uint256(uint160(executeBridge)));
         bytes32 messageId = IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(
             helperDestination.domainId, executeAddress, message
@@ -91,27 +77,25 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
 
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _messageBody) external override onlyMailbox {
         // TODO: standarize the bytes decoding
-        (
-            uint256 _shares,
-            address _user,
-            address _lendingPoolOrigin,
-            address _lendingPoolDestination,
-            ExecuteType _executeType
-        ) = abi.decode(_messageBody, (uint256, address, address, address, ExecuteType));
+        (bytes memory _message,, ExecuteType _executeType) = abi.decode(_messageBody, (bytes, address, ExecuteType));
         if (_executeType == ExecuteType.WithdrawLiquidity) {
-            address router = ILendingPool(_lendingPoolOrigin).router();
-            ILPRouter(router).refundWithdrawLiquidity(_shares, _user);
-            emit ReceivedMessage(
-                _origin,
-                _sender,
-                _messageBody,
-                _shares,
-                _user,
-                _lendingPoolOrigin,
-                _lendingPoolDestination,
-                _executeType
-            );
+            _handleWithdrawLiquidity(_message);
         }
+        emit ReceivedMessage(_origin, _sender, _messageBody);
+    }
+
+    function _handleWithdrawLiquidity(bytes memory _message) internal {
+        (
+            ,
+            ,
+            address _user,
+            uint256 _userSupplyShares,
+            uint256 _totalSupplyShares,
+            uint256 _totalSupplyAssets,
+            address _lendingPoolOrigin
+        ) = abi.decode(_message, (uint256, uint256, address, uint256, uint256, uint256, address));
+        address router = ILendingPool(_lendingPoolOrigin).router();
+        ILPRouter(router).settlementWithdrawLiquidity(_user, _userSupplyShares, _totalSupplyShares, _totalSupplyAssets);
     }
 
     function _onlyMailbox() internal view {
