@@ -29,6 +29,7 @@ contract ConfigureLendingPool is IMessageRecipient {
             IFactory(factory).setPoolOtherChains(
                 lendingPoolKey, poolOtherChain.chainId, poolOtherChain.lendingPoolAddress
             );
+            IFactory(factory).setLendingPoolInfo(poolOtherChain.lendingPoolAddress, poolOtherChain.chainId);
         }
         emit ReceivedMessage(_origin, _sender, _messageBody);
     }

@@ -36,7 +36,7 @@ contract HelperUtils {
         factory = _factory;
     }
 
-    function getMaxBorrowAmount(address _lendingPool, address _user) public view returns (uint256) {
+    function getMaxBorrowAmount(address _lendingPool, address _user, uint256 _chainId) public view returns (uint256) {
         ILendingPool lendingPool = ILendingPool(_lendingPool);
 
         // Get pool data in one struct
@@ -54,7 +54,7 @@ contract HelperUtils {
         uint256 tokenValue = _getCollateralValue(poolData, _user);
 
         // Get borrow data and calculate current borrow amount
-        uint256 borrowAmount = _getCurrentBorrowAmount(lendingPool, _user);
+        uint256 borrowAmount = _getCurrentBorrowAmount(lendingPool, _user, _chainId);
 
         // Calculate max borrow amount
         uint256 maxBorrowAmount = ((tokenValue * poolData.ltv) / 1e18) - borrowAmount;
@@ -74,11 +74,15 @@ contract HelperUtils {
     }
 
     // Internal function to get current borrow amount
-    function _getCurrentBorrowAmount(ILendingPool lendingPool, address _user) internal view returns (uint256) {
+    function _getCurrentBorrowAmount(ILendingPool lendingPool, address _user, uint256 _chainId)
+        internal
+        view
+        returns (uint256)
+    {
         BorrowData memory borrowData = BorrowData({
             totalBorrowAssets: ILPRouter(lendingPool.router()).totalBorrowAssets(),
             totalBorrowShares: ILPRouter(lendingPool.router()).totalBorrowShares(),
-            userBorrowShares: ILPRouter(lendingPool.router()).userBorrowShares(_user)
+            userBorrowShares: ILPRouter(lendingPool.router()).userBorrowShares(_user, _chainId)
         });
 
         return borrowData.totalBorrowAssets == 0
@@ -105,12 +109,12 @@ contract HelperUtils {
         return uint256(tokenPrice);
     }
 
-    function getHealthFactor(address _lendingPool, address _user) public view returns (uint256) {
+    function getHealthFactor(address _lendingPool, address _user, uint256 _chainId) public view returns (uint256) {
         ILendingPool lendingPool = ILendingPool(_lendingPool);
 
         // Get basic user data
         address userPosition = ILPRouter(lendingPool.router()).addressPositions(_user);
-        uint256 userBorrowShares = ILPRouter(lendingPool.router()).userBorrowShares(_user);
+        uint256 userBorrowShares = ILPRouter(lendingPool.router()).userBorrowShares(_user, _chainId);
 
         if (userBorrowShares == 0) {
             return 69; // No debt = infinite health factor
@@ -121,7 +125,7 @@ contract HelperUtils {
 
         // Calculate collateral and borrow values using internal functions
         uint256 collateralValue = _calculateCollateralValue(userPosition);
-        uint256 borrowValue = _calculateBorrowValue(lendingPool, _user);
+        uint256 borrowValue = _calculateBorrowValue(lendingPool, _user, _chainId);
 
         // Calculate health factor
         uint256 ltv = ILPRouter(lendingPool.router()).ltv();
@@ -148,12 +152,16 @@ contract HelperUtils {
     }
 
     // Internal function to calculate total borrow value
-    function _calculateBorrowValue(ILendingPool lendingPool, address _user) internal view returns (uint256) {
+    function _calculateBorrowValue(ILendingPool lendingPool, address _user, uint256 _chainId)
+        internal
+        view
+        returns (uint256)
+    {
         // Reuse BorrowData struct to group variables
         BorrowData memory borrowData = BorrowData({
             totalBorrowAssets: ILPRouter(lendingPool.router()).totalBorrowAssets(),
             totalBorrowShares: ILPRouter(lendingPool.router()).totalBorrowShares(),
-            userBorrowShares: ILPRouter(lendingPool.router()).userBorrowShares(_user)
+            userBorrowShares: ILPRouter(lendingPool.router()).userBorrowShares(_user, _chainId)
         });
 
         address borrowToken = ILPRouter(lendingPool.router()).borrowToken();

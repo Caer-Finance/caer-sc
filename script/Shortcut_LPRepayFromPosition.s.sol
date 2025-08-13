@@ -29,7 +29,7 @@ contract LPRepayFromPositionScript is Script, Helper {
         uint256 decimals = 10 ** IERC20Metadata(borrowToken).decimals();
         uint256 amountToPay = amount * decimals;
 
-        uint256 debtBefore = ILPRouter(LPRouter).userBorrowShares(yourWallet);
+        uint256 debtBefore = ILPRouter(LPRouter).userBorrowShares(yourWallet, block.chainid);
         console.log("debtBefore", debtBefore);
         vm.startBroadcast(privateKey);
         // approve
@@ -37,7 +37,7 @@ contract LPRepayFromPositionScript is Script, Helper {
             ((amountToPay * ILPRouter(LPRouter).totalBorrowShares()) / ILPRouter(LPRouter).totalBorrowAssets());
         IERC20(borrowToken).approve(ORIGIN_lendingPool, amountToPay + 1e6);
         ILendingPool(ORIGIN_lendingPool).repayWithSelectedToken(shares, address(ORIGIN_USDC), true);
-        uint256 debtAfter = ILPRouter(LPRouter).userBorrowShares(yourWallet);
+        uint256 debtAfter = ILPRouter(LPRouter).userBorrowShares(yourWallet, block.chainid);
         console.log("-------------------------------- repay from position --------------------------------");
         console.log("debtAfter", debtAfter);
         vm.stopBroadcast();

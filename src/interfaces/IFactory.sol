@@ -26,6 +26,8 @@ interface IFactory {
     function getPoolLength() external view returns (uint256);
     function getPoolOtherChainsLength(address _originLendingPool) external view returns (uint256);
     function getPoolOtherChainsByChainId(address _originLendingPool, uint256 _chainId) external view returns (address);
+    function executeOrigin() external view returns (address);
+    function executeDestination() external view returns (address);
 
     // ** WRITE
     function createLendingPool(address _collateralToken, address _borrowToken, uint256 _ltv, uint256[] memory _chainIds)
@@ -40,4 +42,7 @@ interface IFactory {
     function updateBridgeRouter(address _bridgeRouter) external;
     function setPoolOtherChains(address _originLendingPool, uint256 _origin, address _destinationLendingPool)
         external;
+    function setExecuteOrigin(address _executeOrigin) external;
+    function setExecuteDestination(address _executeDestination) external;
+    function setLendingPoolInfo(address _lendingPool, uint256 _chainId) external;
 }

@@ -16,8 +16,8 @@ import {HelperTestnet} from "../src/HelperTestnet.sol";
 import {IsHealthy} from "../src/IsHealthy.sol";
 import {Protocol} from "../src/Protocol.sol";
 import {LendingPoolRouterDeployer} from "../src/LendingPools/LendingPoolRouterDeployer.sol";
-import {BridgeRouter} from "../src/Bridges/BridgeRouter.sol";
-import {CreateLendingPoolBridgeRouter} from "../src/Crosschains/CreateLendingPoolBridgeRouter.sol";
+import {BridgeRouter} from "../src/Crosschains/BridgeRouter.sol";
+// import {CreateLendingPoolBridgeRouter} from "../src/Crosschains/CreateLendingPoolBridgeRouter.sol";
 import {IFactory} from "../src/Interfaces/IFactory.sol";
 import {CreateLendingPoolOrigin} from "../src/Crosschains/CreateLendingPoolOrigin.sol";
 import {CreateLendingPoolDestination} from "../src/Crosschains/CreateLendingPoolDestination.sol";
@@ -44,7 +44,7 @@ contract CaerTest is Test {
     Protocol public protocol;
     HelperTestnet public helperTestnet;
     BridgeRouter public bridgeRouter;
-    CreateLendingPoolBridgeRouter public createLendingPoolBridgeRouter;
+    // CreateLendingPoolBridgeRouter public createLendingPoolBridgeRouter;
     CreateLendingPoolOrigin public createLendingPoolOrigin;
     CreateLendingPoolDestination public createLendingPoolDestination;
     ConfigureLendingPool public configureLendingPool;
@@ -81,7 +81,7 @@ contract CaerTest is Test {
         protocol = new Protocol();
         helperTestnet = new HelperTestnet();
         bridgeRouter = new BridgeRouter();
-        createLendingPoolBridgeRouter = new CreateLendingPoolBridgeRouter();
+        // createLendingPoolBridgeRouter = new CreateLendingPoolBridgeRouter();
 
         usdc = new MockUSDC();
         usdt = new MockUSDT();
@@ -96,7 +96,7 @@ contract CaerTest is Test {
             address(protocol),
             address(helperTestnet),
             address(bridgeRouter),
-            address(createLendingPoolBridgeRouter)
+            address(bridgeRouter)
         );
 
         lendingPoolDeployer.setFactory(address(lendingPoolFactory));
@@ -117,18 +117,18 @@ contract CaerTest is Test {
         IFactory(address(lendingPoolFactory)).addTokenDataStream(address(usdc), BaseUsdcUsd);
         IFactory(address(lendingPoolFactory)).addTokenDataStream(address(usdt), BaseUsdtUsd);
 
-        ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).setOriginBridge(
+        ICreateLendingPoolBridgeRouter(address(bridgeRouter)).setOriginBridge(
             block.chainid, address(createLendingPoolOrigin)
         );
-        ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).setReceiverBridge(
+        ICreateLendingPoolBridgeRouter(address(bridgeRouter)).setReceiverBridge(
             block.chainid, address(createLendingPoolDestination)
         );
-        ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).setConfiguredBridge(
+        ICreateLendingPoolBridgeRouter(address(bridgeRouter)).setConfiguredBridge(
             block.chainid, address(configureLendingPool)
         );
 
         // ** OTHER CHAIN **
-        ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).setReceiverBridge(
+        ICreateLendingPoolBridgeRouter(address(bridgeRouter)).setReceiverBridge(
             421614, address(0x569597F8a90472d162bE12497EfED538Bd8CC78D)
         );
 
@@ -141,7 +141,7 @@ contract CaerTest is Test {
     function helper_supply_liquidity(address _user, uint256 _amount) public {
         vm.startPrank(_user);
         IERC20(address(usdc)).approve(address(lendingPool), _amount);
-        ILendingPool(address(lendingPool)).supplyLiquidity(_amount);
+        ILendingPool(address(lendingPool)).supplyLiquidity(_amount, block.chainid, _user);
         vm.stopPrank();
     }
 
@@ -181,7 +181,7 @@ contract CaerTest is Test {
         vm.startPrank(alice);
 
         IERC20(address(usdc)).approve(address(lendingPool), 10_000e6);
-        ILendingPool(address(lendingPool)).supplyLiquidity(10_000e6);
+        ILendingPool(address(lendingPool)).supplyLiquidity(10_000e6, block.chainid, alice);
         address router = ILendingPool(address(lendingPool)).router();
         console.log("supplyLiquidity", IERC20(address(usdc)).balanceOf(address(lendingPool)));
         console.log("userSupplyShares", ILPRouter(router).userSupplyShares(alice));

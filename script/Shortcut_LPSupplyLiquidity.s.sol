@@ -49,7 +49,7 @@ contract LPSupplyLiquidityScript is Script, Helper {
         } else {
             console.log("Your balance before supply liquidity", balance);
             IERC20(borrowToken).approve(ORIGIN_lendingPool, amountSupplyLiquidity);
-            ILendingPool(ORIGIN_lendingPool).supplyLiquidity(amountSupplyLiquidity);
+            ILendingPool(ORIGIN_lendingPool).supplyLiquidity(amountSupplyLiquidity, block.chainid, yourWallet);
             console.log("success");
             console.log("Your balance after supply liquidity", IERC20(borrowToken).balanceOf(yourWallet));
         }

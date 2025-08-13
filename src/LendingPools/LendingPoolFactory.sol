@@ -3,8 +3,7 @@ pragma solidity ^0.8.13;
 
 import {ILPDeployer} from "../interfaces/ILPDeployer.sol";
 import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ICreateLendingPoolBridgeRouter} from "../interfaces/ICreateLendingPoolBridgeRouter.sol";
-import {ICreateLendingPoolOrigin} from "../interfaces/ICreateLendingPoolOrigin.sol";
+import {ILendingPoolExecuteOrigin} from "../interfaces/ILendingPoolExecuteOrigin.sol";
 // import {IHelperTestnet} from "../interfaces/IHelperTestnet.sol";
 // import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
 
@@ -18,7 +17,7 @@ import {ICreateLendingPoolOrigin} from "../interfaces/ICreateLendingPoolOrigin.s
  */
 contract LendingPoolFactory is Ownable {
     error OnlyOwner();
-
+    error PoolNotSet();
     /**
      * @notice Emitted when a new lending pool is created
      * @param collateralToken The address of the collateral token
@@ -26,6 +25,7 @@ contract LendingPoolFactory is Ownable {
      * @param lendingPool The address of the created lending pool
      * @param ltv The Loan-to-Value ratio for the pool
      */
+
     event LendingPoolCreated(
         address indexed collateralToken, address indexed borrowToken, address indexed lendingPool, uint256 ltv
     );
@@ -89,7 +89,7 @@ contract LendingPoolFactory is Ownable {
     address public tokenBridgeRouter;
 
     /// @notice The address of the lp bridge router contract
-    address public lpBridgeRouter;
+    address public bridgeRouter;
 
     /// @notice Array of all created pools
     Pool[] public pools;
@@ -98,9 +98,10 @@ contract LendingPoolFactory is Ownable {
     mapping(address => address) public tokenDataStream;
 
     mapping(address => CrosschainPool[]) public poolOtherChains;
+    mapping(address => uint256) public lendingPoolInfo;
 
-    /// @notice Total number of pools created
-    uint256 public poolCount;
+    address public executeOrigin;
+    address public executeDestination;
 
     /**
      * @notice Constructor for the LendingPoolFactory
@@ -114,7 +115,7 @@ contract LendingPoolFactory is Ownable {
         address _protocol,
         address _helper,
         address _tokenBridgeRouter,
-        address _lpBridgeRouter
+        address _bridgeRouter
     ) Ownable(msg.sender) {
         isHealthy = _isHealthy;
         lendingPoolDeployer = _lendingPoolDeployer;
@@ -122,7 +123,7 @@ contract LendingPoolFactory is Ownable {
         protocol = _protocol;
         helper = _helper;
         tokenBridgeRouter = _tokenBridgeRouter;
-        lpBridgeRouter = _lpBridgeRouter;
+        bridgeRouter = _bridgeRouter;
     }
 
     /**
@@ -143,22 +144,28 @@ contract LendingPoolFactory is Ownable {
         payable
         returns (address)
     {
-        address lendingPool = ILPDeployer(lendingPoolDeployer).deployLendingPool(collateralToken, borrowToken, ltv, _chainIds);
-
+        address lendingPool =
+            ILPDeployer(lendingPoolDeployer).deployLendingPool(collateralToken, borrowToken, ltv, _chainIds);
         pools.push(Pool(collateralToken, borrowToken, address(lendingPool)));
-        poolCount++;
 
         setPoolOtherChains(address(lendingPool), block.chainid, address(lendingPool));
+        setLendingPoolInfo(address(lendingPool), block.chainid);
 
-        address originBridge = ICreateLendingPoolBridgeRouter(lpBridgeRouter).originBridges(block.chainid);
+        // address originBridge = ILendingPoolExecuteOrigin(executeOrigin).originBridges(block.chainid);
 
         // TODO: add gas amount
         // IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(address(helper)).chains(block.chainid);
-        // quoteGasPayment(helperDestination.domainId, 0) 
+        // quoteGasPayment(helperDestination.domainId, 0)
         // uint256 gasAmount = IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperOrigin.domainId, 0);
-        ICreateLendingPoolOrigin(originBridge).createLendingPool{value: 0}(
-            address(lendingPool), collateralToken, borrowToken, ltv, _chainIds
-        );
+        // ICreateLendingPoolOrigin(originBridge).createLendingPool{value: 0}(
+        //     address(lendingPool), collateralToken, borrowToken, ltv, _chainIds
+        // );
+        if (msg.sender != executeDestination) {
+            bytes memory message = abi.encode(address(lendingPool), collateralToken, borrowToken, ltv, _chainIds);
+            ILendingPoolExecuteOrigin(executeOrigin).execute{value: 0}(
+                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.CreateLendingPool
+            );
+        }
 
         emit LendingPoolCreated(collateralToken, borrowToken, address(lendingPool), ltv);
         return address(lendingPool);
@@ -204,8 +211,8 @@ contract LendingPoolFactory is Ownable {
         tokenBridgeRouter = _tokenBridgeRouter;
     }
 
-    function updateLpBridgeRouter(address _lpBridgeRouter) public onlyOwner {
-        lpBridgeRouter = _lpBridgeRouter;
+    function updateBridgeRouter(address _bridgeRouter) public onlyOwner {
+        bridgeRouter = _bridgeRouter;
     }
     // ************************************************
 
@@ -216,7 +223,6 @@ contract LendingPoolFactory is Ownable {
             for (uint256 i = 0; i < poolOtherChains[_originPool].length; i++) {
                 if (poolOtherChains[_originPool][i].chainId != _chainId) {
                     poolOtherChains[_originPool].push(CrosschainPool(_chainId, _lendingPoolAddress));
-                    break;
                 }
             }
         }
@@ -233,6 +239,18 @@ contract LendingPoolFactory is Ownable {
                 return poolOtherChains[_originPool][i].lendingPoolAddress;
             }
         }
-        return address(0);
+        revert PoolNotSet();
+    }
+
+    function setExecuteOrigin(address _executeOrigin) public onlyOwner {
+        executeOrigin = _executeOrigin;
+    }
+
+    function setExecuteDestination(address _executeDestination) public onlyOwner {
+        executeDestination = _executeDestination;
+    }
+
+    function setLendingPoolInfo(address _lendingPool, uint256 _chainId) public {
+        lendingPoolInfo[_lendingPool] = _chainId;
     }
 }

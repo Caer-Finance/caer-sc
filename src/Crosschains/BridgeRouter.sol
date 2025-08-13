@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract CreateLendingPoolBridgeRouter is Ownable {
+contract BridgeRouter is Ownable {
     // chainId => address
     mapping(uint256 => address) public originBridges;
     mapping(uint256 => address) public receiverBridges;

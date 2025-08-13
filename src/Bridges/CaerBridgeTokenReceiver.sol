@@ -39,7 +39,7 @@ contract CaerBridgeTokenReceiver is IMessageRecipient, Ownable {
     // Called by Hyperlane when message arrives
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _messageBody) external override onlyMailbox {
         IHelperTestnet.ChainInfo memory helper = IHelperTestnet(helperTestnet).chains(block.chainid);
-        (uint256 amount, uint256 shares, address recipient, address lendingPoolOrigin, address lendingPoolDestination) =
+        (uint256 amount,, address recipient,, address lendingPoolDestination) =
             abi.decode(_messageBody, (uint256, uint256, address, address, address));
         if (amount < IERC20(token).balanceOf(lendingPoolDestination)) {
             // TODO: hit via lendingPool && add user borrowshare

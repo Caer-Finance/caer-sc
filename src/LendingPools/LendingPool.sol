@@ -4,11 +4,8 @@ pragma solidity ^0.8.13;
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
-import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
 import {IFactory} from "../Interfaces/IFactory.sol";
 import {IPosition} from "../Interfaces/IPosition.sol";
-import {ICaerBridgeTokenSender} from "../Interfaces/ICaerBridgeTokenSender.sol";
-import {IHelperTestnet} from "../Interfaces/IHelperTestnet.sol";
 import {ILPRouter} from "../Interfaces/ILPRouter.sol";
 import {IBridgeRouter} from "../Interfaces/IBridgeRouter.sol";
 import {ILPRouterDeployer} from "../Interfaces/ILPRouterDeployer.sol";
@@ -73,7 +70,7 @@ contract LendingPool is ReentrancyGuard {
         _;
     }
 
-    function _nonZero(uint256 _amount) internal view {
+    function _nonZero(uint256 _amount) internal pure {
         if (_amount == 0) revert ZeroAmount();
     }
 
@@ -114,10 +111,30 @@ contract LendingPool is ReentrancyGuard {
      * @custom:throws ZeroAmount if amount is 0.
      * @custom:emits SupplyLiquidity when liquidity is supplied.
      */
-    function supplyLiquidity(uint256 _amount) public nonReentrant updateInterest nonZero(_amount) {
-        uint256 shares = ILPRouter(router).supplyLiquidity(_amount, msg.sender);
-        IERC20(ILPRouter(router).borrowToken()).safeTransferFrom(msg.sender, address(this), _amount);
-        emit SupplyLiquidity(msg.sender, _amount, shares);
+    function supplyLiquidity(uint256 _amount, uint256 _chainId, address _user)
+        public
+        nonReentrant
+        updateInterest
+        nonZero(_amount)
+    {
+        address bridgeRouter = IFactory(factory).bridgeRouter();
+        if (
+            msg.sender == _user || msg.sender == IBridgeRouter(bridgeRouter).originBridges(block.chainid)
+                || msg.sender == IBridgeRouter(bridgeRouter).receiverBridges(block.chainid)
+        ) {
+            uint256 shares = ILPRouter(router).supplyLiquidity(_amount, _chainId, _user);
+            emit SupplyLiquidity(_user, _amount, shares);
+        }
+
+        if (_chainId == block.chainid) {
+            IERC20(ILPRouter(router).borrowToken()).safeTransferFrom(_user, address(this), _amount);
+            bytes memory message = abi.encode(_amount, _user, address(this), chainIds, _chainId);
+            uint256[] memory _chainIds = new uint256[](1);
+            _chainIds[0] = _chainId;
+            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
+                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.SupplyLiquidity
+            );
+        }
     }
 
     /**
@@ -160,7 +177,7 @@ contract LendingPool is ReentrancyGuard {
                 );
                 uint256[] memory _chainIds = new uint256[](1);
                 _chainIds[0] = destinationChainId;
-                ILendingPoolExecuteOrigin(factory).execute{value: msg.value}(
+                ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: msg.value}(
                     message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.WithdrawLiquidity
                 );
             }
@@ -175,10 +192,31 @@ contract LendingPool is ReentrancyGuard {
      * @custom:throws ZeroAmount if amount is 0.
      * @custom:emits SupplyCollateral when collateral is supplied.
      */
-    function supplyCollateral(uint256 _amount) public positionRequired nonReentrant updateInterest nonZero(_amount) {
-        IERC20(ILPRouter(router).collateralToken()).safeTransferFrom(
-            msg.sender, ILPRouter(router).addressPositions(msg.sender), _amount
-        );
+    function supplyCollateral(uint256 _amount, uint256 _chainId, address _user)
+        public
+        positionRequired
+        nonReentrant
+        updateInterest
+        nonZero(_amount)
+    {
+        IERC20(ILPRouter(router).collateralToken()).safeTransferFrom(msg.sender, address(this), _amount);
+        address bridgeRouter = IFactory(factory).bridgeRouter();
+        if (
+            msg.sender == _user || msg.sender == IBridgeRouter(bridgeRouter).originBridges(block.chainid)
+                || msg.sender == IBridgeRouter(bridgeRouter).receiverBridges(block.chainid)
+        ) {
+            ILPRouter(router).supplyCollateral(_chainId, msg.sender, _amount);
+        }
+
+        if (_chainId == block.chainid) {
+            IERC20(ILPRouter(router).collateralToken()).safeTransferFrom(_user, address(this), _amount);
+            bytes memory message = abi.encode(_amount, _user, address(this), chainIds, _chainId);
+            uint256[] memory _chainIds = new uint256[](1);
+            _chainIds[0] = _chainId;
+            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
+                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.SupplyCollateral
+            );
+        }
         emit SupplyCollateral(msg.sender, _amount);
     }
 
@@ -189,16 +227,30 @@ contract LendingPool is ReentrancyGuard {
      * @custom:throws ZeroAmount if amount is 0.
      * @custom:throws InsufficientCollateral if user has insufficient collateral balance.
      */
-    function withdrawCollateral(uint256 _amount) public positionRequired nonReentrant updateInterest nonZero(_amount) {
-        if (
-            _amount
-                > IERC20(ILPRouter(router).collateralToken()).balanceOf(ILPRouter(router).addressPositions(msg.sender))
-        ) {
+    function withdrawCollateral(uint256 _amount, uint256 _chainId, address _user)
+        public
+        positionRequired
+        nonReentrant
+        updateInterest
+        nonZero(_amount)
+    {
+        if (_amount > IERC20(ILPRouter(router).collateralToken()).balanceOf(address(this))) {
             revert InsufficientCollateral();
         }
 
-        IPosition(ILPRouter(router).addressPositions(msg.sender)).withdrawCollateral(_amount, msg.sender);
-        ILPRouter(router).withdrawCollateral(msg.sender);
+        // IPosition(ILPRouter(router).addressPositions(msg.sender)).withdrawCollateral(_amount, msg.sender);
+        if (_chainId == block.chainid) {
+            IERC20(ILPRouter(router).collateralToken()).safeTransferFrom(address(this), _user, _amount);
+        }
+        if (_user == msg.sender) {
+            uint256 userCollateral = ILPRouter(router).withdrawCollateral(_amount, _chainId, _user);
+            bytes memory message = abi.encode(userCollateral, _amount, msg.sender, address(this), _chainId);
+            uint256[] memory _chainIds = new uint256[](1);
+            _chainIds[0] = _chainId;
+            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
+                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.WithdrawCollateral
+            );
+        }
     }
 
     /**
@@ -209,7 +261,7 @@ contract LendingPool is ReentrancyGuard {
      * @custom:throws InsufficientLiquidity if protocol lacks liquidity.
      * @custom:emits BorrowDebtCrosschain when borrow is successful.
      */
-    function borrowDebt(uint256 _amount, uint256 _chainId)
+    function borrowDebt(uint256 _amount, address _user, uint256 _chainId)
         public
         payable
         nonReentrant
@@ -217,28 +269,22 @@ contract LendingPool is ReentrancyGuard {
         nonZero(_amount)
     {
         address protocol = IFactory(factory).protocol();
-        (uint256 protocolFee, uint256 userAmount, uint256 shares) = ILPRouter(router).borrowDebt(_amount, msg.sender);
-
-        if (_chainId != block.chainid) {
-            address helperTestnet = IFactory(factory).helper();
-            IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainId);
-            IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
-
-            address bridgeRouter = IFactory(factory).bridgeRouter();
-            address bridgeTokenSenders =
-                IBridgeRouter(bridgeRouter).getBridgeTokenSendersChainId(ILPRouter(router).borrowToken(), _chainId);
-
-            uint256 gasAmount =
-                IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, userAmount);
-
-            address lendingPoolDestination = IFactory(factory).getPoolOtherChainsByChainId(address(this), _chainId);
-
-            ICaerBridgeTokenSender(bridgeTokenSenders).bridge{value: gasAmount}(
-                userAmount, msg.sender, shares, address(this), lendingPoolDestination
-            );
-        } else {
-            IERC20(ILPRouter(router).borrowToken()).safeTransfer(msg.sender, userAmount);
+        (uint256 protocolFee, uint256 userAmount, uint256 shares) =
+            ILPRouter(router).borrowDebt(_amount, msg.sender, _chainId);
+        address bridgeRouter = IFactory(factory).bridgeRouter();
+        if (
+            msg.sender == _user || msg.sender == IBridgeRouter(bridgeRouter).originBridges(block.chainid)
+                || msg.sender == IBridgeRouter(bridgeRouter).receiverBridges(block.chainid)
+        ) {
+            IERC20(ILPRouter(router).borrowToken()).safeTransfer(_user, userAmount);
             IERC20(ILPRouter(router).borrowToken()).safeTransfer(protocol, protocolFee);
+        } else if (_chainId != block.chainid) {
+            bytes memory message = abi.encode(_amount, _user, address(this), _chainId);
+            uint256[] memory _chainIds = new uint256[](1);
+            _chainIds[0] = _chainId;
+            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: msg.value}(
+                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.BorrowDebt
+            );
         }
         emit BorrowDebtCrosschain(msg.sender, _amount, userAmount, shares, _chainId);
     }
@@ -253,21 +299,33 @@ contract LendingPool is ReentrancyGuard {
      * @custom:throws amountSharesInvalid if shares exceed user's borrow shares.
      * @custom:emits RepayWithCollateralByPosition when repayment is successful.
      */
-    function repayWithSelectedToken(uint256 _shares, address _token, bool _fromPosition)
+    function repayWithSelectedToken(uint256 _shares, address _token, bool _fromPosition, uint256 _chainId)
         public
         positionRequired
         nonReentrant
         updateInterest
+        nonZero(_shares)
     {
-        if (_shares == 0) revert ZeroAmount();
-        if (_shares > ILPRouter(router).userBorrowShares(msg.sender)) revert amountSharesInvalid();
+        if (_shares > ILPRouter(router).userBorrowShares(msg.sender, _chainId)) revert amountSharesInvalid();
 
-        uint256 borrowAmount = ILPRouter(router).repayWithSelectedToken(_shares, msg.sender);
+        (uint256 borrowAmount, uint256 userBorrowShares, uint256 totalBorrowShares, uint256 totalBorrowAssets) =
+            ILPRouter(router).repayWithSelectedToken(_shares, msg.sender);
 
-        if (_token == ILPRouter(router).borrowToken() && !_fromPosition) {
+        if (_token == ILPRouter(router).borrowToken() && !_fromPosition && _chainId == block.chainid) {
             IERC20(ILPRouter(router).borrowToken()).safeTransferFrom(msg.sender, address(this), borrowAmount);
-        } else {
-            IPosition(ILPRouter(router).addressPositions(msg.sender)).repayWithSelectedToken(borrowAmount, _token);
+        }
+        // else {
+        //     IPosition(ILPRouter(router).addressPositions(msg.sender)).repayWithSelectedToken(borrowAmount, _token);
+        // }
+
+        if (_chainId != block.chainid) {
+            bytes memory message =
+                abi.encode(userBorrowShares, totalBorrowShares, totalBorrowAssets, msg.sender, address(this), _chainId);
+            uint256[] memory _chainIds = new uint256[](1);
+            _chainIds[0] = _chainId;
+            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
+                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.RepayDebt
+            );
         }
 
         emit RepayWithCollateralByPosition(msg.sender, borrowAmount, _shares);

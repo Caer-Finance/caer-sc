@@ -261,12 +261,12 @@ contract CaerScript is Script {
         address _caerBridgeTokenReceiver,
         uint32 _chainId
     ) public {
-        caerBridgeTokenSender = new CaerBridgeTokenSender(
-            _helperTestnet,
-            _mockToken,
-            _caerBridgeTokenReceiver, // ** otherchain ** RECEIVER BRIDGE
-            _chainId // ** otherchain ** CHAIN ID
-        );
+        // caerBridgeTokenSender = new CaerBridgeTokenSender(
+        //     _helperTestnet,
+        //     _mockToken,
+        //     _caerBridgeTokenReceiver, // ** otherchain ** RECEIVER BRIDGE
+        //     _chainId // ** otherchain ** CHAIN ID
+        // );
         // TODO: add to BridgeRouter
         // ITokenSwap(_mockToken).addBridgeTokenSender(address(caerBridgeTokenSender));
     }

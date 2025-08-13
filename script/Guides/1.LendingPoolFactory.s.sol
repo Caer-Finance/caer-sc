@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import {Script, console} from "forge-std/Script.sol";
 import {HelperTestnet} from "../../src/HelperTestnet.sol";
 import {LendingPoolFactory} from "../../src/LendingPools/LendingPoolFactory.sol";
-import {CreateLendingPoolBridgeRouter} from "../../src/Crosschains/CreateLendingPoolBridgeRouter.sol";
+// import {CreateLendingPoolBridgeRouter} from "../../src/Crosschains/CreateLendingPoolBridgeRouter.sol";
 import {CreateLendingPoolOrigin} from "../../src/Crosschains/CreateLendingPoolOrigin.sol";
 import {CreateLendingPoolDestination} from "../../src/Crosschains/CreateLendingPoolDestination.sol";
 import {ICreateLendingPoolBridgeRouter} from "../../src/interfaces/ICreateLendingPoolBridgeRouter.sol";
@@ -12,7 +12,8 @@ import {IsHealthy} from "../../src/IsHealthy.sol";
 import {LendingPoolRouterDeployer} from "../../src/LendingPools/LendingPoolRouterDeployer.sol";
 import {LendingPoolDeployer} from "../../src/LendingPools/LendingPoolDeployer.sol";
 import {Protocol} from "../../src/Protocol.sol";
-import {BridgeRouter} from "../../src/Bridges/BridgeRouter.sol";
+// import {BridgeRouter} from "../../src/Bridges/BridgeRouter.sol";
+import {BridgeRouter} from "../../src/Crosschains/BridgeRouter.sol";
 import {ConfigureLendingPool} from "../../src/Crosschains/ConfigureLendingPool.sol";
 import {ILPDeployer} from "../../src/interfaces/ILPDeployer.sol";
 
@@ -20,7 +21,7 @@ contract LendingPoolFactoryScript is Script {
     IsHealthy public isHealthy;
     HelperTestnet public helperTestnet;
     LendingPoolFactory public lendingPoolFactory;
-    CreateLendingPoolBridgeRouter public createLendingPoolBridgeRouter;
+    // CreateLendingPoolBridgeRouter public createLendingPoolBridgeRouter;
     CreateLendingPoolOrigin public createLendingPoolOrigin;
     LendingPoolRouterDeployer public lendingPoolRouterDeployer;
     LendingPoolDeployer public lendingPoolDeployer;
@@ -46,7 +47,7 @@ contract LendingPoolFactoryScript is Script {
         protocol = new Protocol();
         helperTestnet = new HelperTestnet();
         bridgeRouter = new BridgeRouter();
-        createLendingPoolBridgeRouter = new CreateLendingPoolBridgeRouter();
+        // createLendingPoolBridgeRouter = new CreateLendingPoolBridgeRouter();
         lendingPoolFactory = new LendingPoolFactory(
             address(isHealthy),
             address(lendingPoolDeployer),
@@ -54,22 +55,22 @@ contract LendingPoolFactoryScript is Script {
             address(protocol),
             address(helperTestnet),
             address(bridgeRouter),
-            address(createLendingPoolBridgeRouter)
+            address(bridgeRouter)
         );
         ILPDeployer(address(lendingPoolDeployer)).setFactory(address(lendingPoolFactory));
         createLendingPoolOrigin = new CreateLendingPoolOrigin(address(lendingPoolFactory));
         createLendingPoolDestination = new CreateLendingPoolDestination(address(lendingPoolFactory));
         configureLendingPool = new ConfigureLendingPool(address(lendingPoolFactory));
 
-        ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).setOriginBridge(
+        ICreateLendingPoolBridgeRouter(address(bridgeRouter)).setOriginBridge(
             block.chainid, address(createLendingPoolOrigin)
         );
 
-        ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).setReceiverBridge(
+        ICreateLendingPoolBridgeRouter(address(bridgeRouter)).setReceiverBridge(
             block.chainid, address(createLendingPoolDestination)
         );
 
-        ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).setConfiguredBridge(
+        ICreateLendingPoolBridgeRouter(address(bridgeRouter)).setConfiguredBridge(
             block.chainid, address(configureLendingPool)
         );
         console.log("ishealthy", address(isHealthy));
@@ -78,22 +79,22 @@ contract LendingPoolFactoryScript is Script {
         console.log("protocol", address(protocol));
         console.log("helperTestnet", address(helperTestnet));
         console.log("bridgeRouter", address(bridgeRouter));
-        console.log("createLendingPoolBridgeRouter", address(createLendingPoolBridgeRouter));
+        console.log("createLendingPoolBridgeRouter", address(bridgeRouter));
         console.log("lendingPoolFactory", address(lendingPoolFactory));
         console.log("createLendingPoolDestination", address(createLendingPoolDestination));
         console.log(
             "read receiver bridge",
-            ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).receiverBridges(block.chainid)
+            ICreateLendingPoolBridgeRouter(address(bridgeRouter)).receiverBridges(block.chainid)
         );
         console.log("createLendingPoolOrigin", address(createLendingPoolOrigin));
         console.log(
             "read origin bridge",
-            ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).originBridges(block.chainid)
+            ICreateLendingPoolBridgeRouter(address(bridgeRouter)).originBridges(block.chainid)
         );
         console.log("configureLendingPool", address(configureLendingPool));
         console.log(
             "read configure bridge",
-            ICreateLendingPoolBridgeRouter(address(createLendingPoolBridgeRouter)).configureBridges(block.chainid)
+            ICreateLendingPoolBridgeRouter(address(bridgeRouter)).configureBridges(block.chainid)
         );
         vm.stopBroadcast();
     }
@@ -111,7 +112,7 @@ contract LendingPoolFactoryScript is Script {
     //   createLendingPoolBridgeRouter 0x2e373EcA4A1d1647694B3722656D16156cbB5750
     //   lendingPoolFactory 0x1F24E44Dd63c3fc1953b12De683ceBDC05F14717
     //   createLendingPoolOrigin 0x08F26e6C5919035fce98a2275c3CcEA09ac9029a
-    //   read origin bridge 0x08F26e6C5919035fce98a2275c3CcEA09ac9029a
+    //   read sender bridge 0x08F26e6C5919035fce98a2275c3CcEA09ac9029a
 
     // TODO:
     // - set configure bridge both origin / destination to lpbridgerouter

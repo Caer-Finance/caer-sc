@@ -3,17 +3,16 @@ pragma solidity ^0.8.20;
 
 interface ILendingPoolExecuteOrigin {
     enum ExecuteType {
+        CreateLendingPool,
         WithdrawLiquidity,
         SupplyLiquidity,
         BorrowDebt,
+        BorrowDebtRevert,
+        BorrowDebtSuccess,
         RepayDebt,
         SupplyCollateral,
         WithdrawCollateral
     }
 
-    function execute(
-        bytes memory _message,
-        uint256[] memory _chainId,
-        ExecuteType _executeType
-    ) external payable;
+    function execute(bytes memory _message, uint256[] memory _chainId, ExecuteType _executeType) external payable;
 }

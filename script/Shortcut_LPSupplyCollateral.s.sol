@@ -48,7 +48,7 @@ contract LPSupplyCollateralScript is Script, Helper {
         } else {
             console.log("Your balance before supply collateral", balance);
             IERC20(collateralToken).approve(ORIGIN_lendingPool, amountSupplyCollateral);
-            ILendingPool(ORIGIN_lendingPool).supplyCollateral(amountSupplyCollateral);
+            ILendingPool(ORIGIN_lendingPool).supplyCollateral(amountSupplyCollateral, block.chainid, yourWallet);
             console.log("success");
             console.log("Your balance after supply collateral", IERC20(collateralToken).balanceOf(yourWallet));
         }

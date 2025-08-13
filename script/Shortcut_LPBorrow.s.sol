@@ -66,7 +66,7 @@ contract LPBorrowScript is Script, Helper {
                 );
                 console.log("gasAmount", gasAmount);
             }
-            ILendingPool(ORIGIN_lendingPool).borrowDebt{value: gasAmount}(amountBorrow, chainId);
+            ILendingPool(ORIGIN_lendingPool).borrowDebt{value: gasAmount}(amountBorrow, yourWallet, chainId);
 
             console.log("success");
             console.log("LP balance after borrow", IERC20(borrowToken).balanceOf(ORIGIN_lendingPool));
