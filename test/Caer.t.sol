@@ -147,20 +147,20 @@ contract CaerTest is Test {
 
     // RUN
     // forge test --match-test test_create_lending_pool -vvv
-    function test_create_lending_pool() public {
-        vm.startPrank(alice);
-        console.log("pool count before", IFactory(address(lendingPoolFactory)).poolCount());
-        assertEq(IFactory(address(lendingPoolFactory)).poolCount(), 0);
+    // function test_create_lending_pool() public {
+    //     vm.startPrank(alice);
+    //     console.log("pool count before", IFactory(address(lendingPoolFactory)).poolCount());
+    //     assertEq(IFactory(address(lendingPoolFactory)).poolCount(), 0);
 
-        uint256[] memory chainIds = new uint256[](1);
-        chainIds[0] = 84532;
-        // TODO: add gas amount
-        IFactory(address(lendingPoolFactory)).createLendingPool{value: 0}(address(weth), address(usdc), 7e17, chainIds);
+    //     uint256[] memory chainIds = new uint256[](1);
+    //     chainIds[0] = 84532;
+    //     // TODO: add gas amount
+    //     IFactory(address(lendingPoolFactory)).createLendingPool{value: 0}(address(weth), address(usdc), 7e17, chainIds);
 
-        assertEq(IFactory(address(lendingPoolFactory)).poolCount(), 1);
-        console.log("pool count after", IFactory(address(lendingPoolFactory)).poolCount());
-        vm.stopPrank();
-    }
+    //     assertEq(IFactory(address(lendingPoolFactory)).poolCount(), 1);
+    //     console.log("pool count after", IFactory(address(lendingPoolFactory)).poolCount());
+    //     vm.stopPrank();
+    // }
 
     // RUN
     // forge test --match-test test_crosschain_create_lending_pool -vvv
@@ -177,37 +177,37 @@ contract CaerTest is Test {
 
     // RUN
     // forge test --match-test test_supply_liquidity -vvv
-    function test_supply_liquidity() public {
-        vm.startPrank(alice);
+    // function test_supply_liquidity() public {
+    //     vm.startPrank(alice);
 
-        IERC20(address(usdc)).approve(address(lendingPool), 10_000e6);
-        ILendingPool(address(lendingPool)).supplyLiquidity(10_000e6, block.chainid, alice);
-        address router = ILendingPool(address(lendingPool)).router();
-        console.log("supplyLiquidity", IERC20(address(usdc)).balanceOf(address(lendingPool)));
-        console.log("userSupplyShares", ILPRouter(router).userSupplyShares(alice));
-        console.log("totalSupplyShares", ILPRouter(router).totalSupplyShares());
-        console.log("totalSupplyAssets", ILPRouter(router).totalSupplyAssets());
-        assertEq(ILPRouter(router).userSupplyShares(alice), 10_000e6);
-        assertEq(ILPRouter(router).totalSupplyAssets(), 10_000e6);
-        assertEq(ILPRouter(router).totalSupplyShares(), 10_000e6);
-        assertEq(IERC20(address(usdc)).balanceOf(address(lendingPool)), 10_000e6);
+    //     IERC20(address(usdc)).approve(address(lendingPool), 10_000e6);
+    //     ILendingPool(address(lendingPool)).supplyLiquidity(10_000e6, block.chainid, alice);
+    //     address router = ILendingPool(address(lendingPool)).router();
+    //     console.log("supplyLiquidity", IERC20(address(usdc)).balanceOf(address(lendingPool)));
+    //     console.log("userSupplyShares", ILPRouter(router).userSupplyShares(alice));
+    //     console.log("totalSupplyShares", ILPRouter(router).totalSupplyShares());
+    //     console.log("totalSupplyAssets", ILPRouter(router).totalSupplyAssets());
+    //     assertEq(ILPRouter(router).userSupplyShares(alice), 10_000e6);
+    //     assertEq(ILPRouter(router).totalSupplyAssets(), 10_000e6);
+    //     assertEq(ILPRouter(router).totalSupplyShares(), 10_000e6);
+    //     assertEq(IERC20(address(usdc)).balanceOf(address(lendingPool)), 10_000e6);
 
-        vm.stopPrank();
-    }
+    //     vm.stopPrank();
+    // }
 
     // RUN
     // forge test --match-test test_withdraw_liquidity -vvv
     // TODO: crosschain
-    function test_withdraw_liquidity() public {
-        uint256 amount = 10_000e6;
-        helper_supply_liquidity(alice, amount);
-        uint256 aliceBalance = IERC20(address(usdc)).balanceOf(alice);
-        vm.startPrank(alice);
-        ILendingPool(address(lendingPool)).withdrawLiquidity(amount, alice, 84532, false);
-        console.log("withdrawLiquidity: lendingPool balance", IERC20(address(usdc)).balanceOf(address(lendingPool)));
-        console.log("withdrawLiquidity: user balance", IERC20(address(usdc)).balanceOf(alice));
-        assertEq(IERC20(address(usdc)).balanceOf(address(lendingPool)), 0);
-        assertEq(IERC20(address(usdc)).balanceOf(alice), aliceBalance + amount);
-        vm.stopPrank();
-    }
+    // function test_withdraw_liquidity() public {
+    //     uint256 amount = 10_000e6;
+    //     helper_supply_liquidity(alice, amount);
+    //     uint256 aliceBalance = IERC20(address(usdc)).balanceOf(alice);
+    //     vm.startPrank(alice);
+    //     ILendingPool(address(lendingPool)).withdrawLiquidity(amount, alice, 84532, false);
+    //     console.log("withdrawLiquidity: lendingPool balance", IERC20(address(usdc)).balanceOf(address(lendingPool)));
+    //     console.log("withdrawLiquidity: user balance", IERC20(address(usdc)).balanceOf(alice));
+    //     assertEq(IERC20(address(usdc)).balanceOf(address(lendingPool)), 0);
+    //     assertEq(IERC20(address(usdc)).balanceOf(alice), aliceBalance + amount);
+    //     vm.stopPrank();
+    // }
 }

@@ -25,9 +25,10 @@ contract LendingPool is ReentrancyGuard {
     error InsufficientBorrowShares();
     error amountSharesInvalid();
     error ChainIdNotFound();
+    error NotBridge();
 
     event SupplyLiquidity(address indexed user, uint256 amount, uint256 shares);
-    event WithdrawLiquidity(address indexed user, uint256 amount, uint256 shares, uint256 chainId, bool isMailbox);
+    event WithdrawLiquidity(address indexed user, uint256 amount, uint256 shares, uint256 chainId);
     event SupplyCollateral(address indexed user, uint256 amount);
     event RepayWithCollateralByPosition(address indexed user, uint256 amount, uint256 shares);
     event CreatePosition(address indexed user, address indexed positionAddress);
@@ -117,24 +118,36 @@ contract LendingPool is ReentrancyGuard {
         updateInterest
         nonZero(_amount)
     {
-        address bridgeRouter = IFactory(factory).bridgeRouter();
-        if (
-            msg.sender == _user || msg.sender == IBridgeRouter(bridgeRouter).originBridges(block.chainid)
-                || msg.sender == IBridgeRouter(bridgeRouter).receiverBridges(block.chainid)
-        ) {
-            uint256 shares = ILPRouter(router).supplyLiquidity(_amount, _chainId, _user);
-            emit SupplyLiquidity(_user, _amount, shares);
-        }
+        // TODO: only chainId==block.chainid could do this
+        // address bridgeRouter = IFactory(factory).bridgeRouter();
+        // if (
+        //     msg.sender == _user || msg.sender == IBridgeRouter(bridgeRouter).originBridges(block.chainid)
+        //         || msg.sender == IBridgeRouter(bridgeRouter).receiverBridges(block.chainid)
+        // ) {
+        // }
 
-        if (_chainId == block.chainid) {
-            IERC20(ILPRouter(router).borrowToken()).safeTransferFrom(_user, address(this), _amount);
-            bytes memory message = abi.encode(_amount, _user, address(this), chainIds, _chainId);
-            uint256[] memory _chainIds = new uint256[](1);
-            _chainIds[0] = _chainId;
-            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
-                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.SupplyLiquidity
-            );
-        }
+        uint256 shares = ILPRouter(router).supplyLiquidity(_amount, _chainId, _user);
+        // if (_chainId == block.chainid) {
+        IERC20(ILPRouter(router).borrowToken()).safeTransferFrom(_user, address(this), _amount);
+        bytes memory message = abi.encode(
+            _amount,
+            ILPRouter(router).userBorrowShares(_user, _chainId),
+            ILPRouter(router).totalSupplyShares(),
+            ILPRouter(router).totalSupplyAssets(),
+            _user,
+            address(this),
+            chainIds,
+            _chainId
+        );
+        uint256[] memory _chainIds = new uint256[](1);
+        _chainIds[0] = _chainId;
+
+        ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
+            message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.SupplyLiquidity
+        );
+
+        emit SupplyLiquidity(_user, _amount, shares);
+        // }
     }
 
     /**
@@ -147,42 +160,47 @@ contract LendingPool is ReentrancyGuard {
      * @custom:emits WithdrawLiquidity when liquidity is withdrawn.
      */
     // TODO: could check shares in other chain && if crosschain only mailbox could do this
-    function withdrawLiquidity(uint256 _shares, address _user, uint256 _chainId, bool _isMailbox)
+    function withdrawLiquidity(uint256 _shares, address _user, uint256 _chainId)
         public
         payable
         nonReentrant
         updateInterest
         nonZero(_shares)
     {
-        if (_shares > ILPRouter(router).userSupplyShares(_user) && !_isMailbox) revert InsufficientShares();
-        uint256 destinationChainId = _findChainId(_chainId);
+        if (_shares > ILPRouter(router).userSupplyShares(_user, _chainId)) revert InsufficientShares();
+        uint256 amount = ILPRouter(router).withdrawLiquidity(_shares, _user);
+        if (_chainId == block.chainid) IERC20(ILPRouter(router).borrowToken()).safeTransfer(_user, amount);
+        // CONVERT SHARES TO AMOUNT
+        // PROTECTED FOR TRANSFER ONLY MAILBOX CAN DO THIS
+        bytes memory message = abi.encode(
+            amount,
+            _shares,
+            _user,
+            ILPRouter(router).userSupplyShares(_user, _chainId),
+            ILPRouter(router).totalSupplyShares(),
+            ILPRouter(router).totalSupplyAssets(),
+            chainIds,
+            address(this),
+            _chainId
+        );
+        uint256[] memory _chainIds = new uint256[](1);
+        _chainIds[0] = _chainId;
+        ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: msg.value}(
+            message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.WithdrawLiquidity
+        );
 
-        if (_isMailbox) {
-            IERC20(ILPRouter(router).borrowToken()).safeTransfer(_user, _shares);
-        } else {
-            uint256 amount = ILPRouter(router).withdrawLiquidity(_shares, _user);
-            if (_chainId == block.chainid) {
-                IERC20(ILPRouter(router).borrowToken()).safeTransfer(_user, amount);
-            } else {
-                // CONVERT SHARES TO AMOUNT
-                // PROTECTED FOR TRANSFER ONLY MAILBOX CAN DO THIS
-                bytes memory message = abi.encode(
-                    amount,
-                    _shares,
-                    _user,
-                    ILPRouter(router).userSupplyShares(_user),
-                    ILPRouter(router).totalSupplyShares(),
-                    ILPRouter(router).totalSupplyAssets(),
-                    address(this)
-                );
-                uint256[] memory _chainIds = new uint256[](1);
-                _chainIds[0] = destinationChainId;
-                ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: msg.value}(
-                    message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.WithdrawLiquidity
-                );
-            }
-            emit WithdrawLiquidity(_user, amount, _shares, _chainId, _isMailbox);
+        emit WithdrawLiquidity(_user, amount, _shares, _chainId);
+    }
+
+    function withdrawLiquidityByBridge(uint256 _amount, address _user) public {
+        if (
+            msg.sender != IBridgeRouter(IFactory(factory).bridgeRouter()).originBridges(block.chainid)
+                || msg.sender != IBridgeRouter(IFactory(factory).bridgeRouter()).receiverBridges(block.chainid)
+        ) {
+            revert NotBridge();
         }
+        IERC20(ILPRouter(router).borrowToken()).approve(_user, _amount);
+        IERC20(ILPRouter(router).borrowToken()).safeTransferFrom(address(this), _user, _amount);
     }
 
     /**
@@ -199,24 +217,25 @@ contract LendingPool is ReentrancyGuard {
         updateInterest
         nonZero(_amount)
     {
+        // TODO: only chainId==block.chainid could do this
         IERC20(ILPRouter(router).collateralToken()).safeTransferFrom(msg.sender, address(this), _amount);
-        address bridgeRouter = IFactory(factory).bridgeRouter();
-        if (
-            msg.sender == _user || msg.sender == IBridgeRouter(bridgeRouter).originBridges(block.chainid)
-                || msg.sender == IBridgeRouter(bridgeRouter).receiverBridges(block.chainid)
-        ) {
-            ILPRouter(router).supplyCollateral(_chainId, msg.sender, _amount);
-        }
-
-        if (_chainId == block.chainid) {
-            IERC20(ILPRouter(router).collateralToken()).safeTransferFrom(_user, address(this), _amount);
-            bytes memory message = abi.encode(_amount, _user, address(this), chainIds, _chainId);
-            uint256[] memory _chainIds = new uint256[](1);
-            _chainIds[0] = _chainId;
-            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
-                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.SupplyCollateral
-            );
-        }
+        // address bridgeRouter = IFactory(factory).bridgeRouter();
+        // if (
+        //     msg.sender == _user || msg.sender == IBridgeRouter(bridgeRouter).originBridges(block.chainid)
+        //         || msg.sender == IBridgeRouter(bridgeRouter).receiverBridges(block.chainid)
+        // ) {
+        // }
+        ILPRouter(router).supplyCollateral(_chainId, _user, _amount);
+        // if (_chainId == block.chainid) {
+        bytes memory message = abi.encode(
+            _amount, ILPRouter(router).userCollateral(_user, _chainId), _user, address(this), chainIds, _chainId
+        );
+        uint256[] memory _chainIds = new uint256[](1);
+        _chainIds[0] = _chainId;
+        ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
+            message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.SupplyCollateral
+        );
+        // }
         emit SupplyCollateral(msg.sender, _amount);
     }
 
@@ -239,18 +258,26 @@ contract LendingPool is ReentrancyGuard {
         }
 
         // IPosition(ILPRouter(router).addressPositions(msg.sender)).withdrawCollateral(_amount, msg.sender);
-        if (_chainId == block.chainid) {
-            IERC20(ILPRouter(router).collateralToken()).safeTransferFrom(address(this), _user, _amount);
+
+        IERC20(ILPRouter(router).collateralToken()).safeTransferFrom(address(this), _user, _amount);
+        uint256 userCollateral = ILPRouter(router).withdrawCollateral(_amount, _chainId, _user);
+        bytes memory message = abi.encode(userCollateral, _amount, chainIds, _user, address(this), _chainId);
+        uint256[] memory _chainIds = new uint256[](1);
+        _chainIds[0] = _chainId;
+        ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
+            message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.WithdrawCollateral
+        );
+    }
+
+    function withdrawCollateralByBridge(uint256 _amount, address _user) public {
+        if (
+            msg.sender != IBridgeRouter(IFactory(factory).bridgeRouter()).originBridges(block.chainid)
+                || msg.sender != IBridgeRouter(IFactory(factory).bridgeRouter()).receiverBridges(block.chainid)
+        ) {
+            revert NotBridge();
         }
-        if (_user == msg.sender) {
-            uint256 userCollateral = ILPRouter(router).withdrawCollateral(_amount, _chainId, _user);
-            bytes memory message = abi.encode(userCollateral, _amount, msg.sender, address(this), _chainId);
-            uint256[] memory _chainIds = new uint256[](1);
-            _chainIds[0] = _chainId;
-            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
-                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.WithdrawCollateral
-            );
-        }
+        IERC20(ILPRouter(router).collateralToken()).approve(_user, _amount);
+        IERC20(ILPRouter(router).collateralToken()).safeTransferFrom(address(this), _user, _amount);
     }
 
     /**
@@ -268,25 +295,43 @@ contract LendingPool is ReentrancyGuard {
         updateInterest
         nonZero(_amount)
     {
-        address protocol = IFactory(factory).protocol();
         (uint256 protocolFee, uint256 userAmount, uint256 shares) =
-            ILPRouter(router).borrowDebt(_amount, msg.sender, _chainId);
-        address bridgeRouter = IFactory(factory).bridgeRouter();
-        if (
-            msg.sender == _user || msg.sender == IBridgeRouter(bridgeRouter).originBridges(block.chainid)
-                || msg.sender == IBridgeRouter(bridgeRouter).receiverBridges(block.chainid)
-        ) {
+            ILPRouter(router).borrowDebt(_amount, _user, _chainId);
+        if (_chainId == block.chainid) {
+            address protocol = IFactory(factory).protocol();
             IERC20(ILPRouter(router).borrowToken()).safeTransfer(_user, userAmount);
             IERC20(ILPRouter(router).borrowToken()).safeTransfer(protocol, protocolFee);
-        } else if (_chainId != block.chainid) {
-            bytes memory message = abi.encode(_amount, _user, address(this), _chainId);
-            uint256[] memory _chainIds = new uint256[](1);
-            _chainIds[0] = _chainId;
-            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: msg.value}(
-                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.BorrowDebt
-            );
         }
+        bytes memory message = abi.encode(
+            _amount,
+            ILPRouter(router).userBorrowShares(_user, _chainId),
+            ILPRouter(router).totalBorrowShares(),
+            ILPRouter(router).totalBorrowAssets(),
+            chainIds,
+            _user,
+            address(this),
+            _chainId
+        );
+        uint256[] memory _chainIds = new uint256[](1);
+        _chainIds[0] = _chainId;
+        ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: msg.value}(
+            message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.BorrowDebt
+        );
+
         emit BorrowDebtCrosschain(msg.sender, _amount, userAmount, shares, _chainId);
+    }
+
+    function borrowDebtByBridge(uint256 _amount, address _user) public {
+        if (
+            msg.sender != IBridgeRouter(IFactory(factory).bridgeRouter()).originBridges(block.chainid)
+                || msg.sender != IBridgeRouter(IFactory(factory).bridgeRouter()).receiverBridges(block.chainid)
+        ) {
+            revert NotBridge();
+        }
+        uint256 protocolFee = _amount * 1e15 / 1e18;
+        address protocol = IFactory(factory).protocol();
+        IERC20(ILPRouter(router).borrowToken()).safeTransfer(_user, _amount - protocolFee);
+        IERC20(ILPRouter(router).borrowToken()).safeTransfer(protocol, protocolFee);
     }
 
     /**
@@ -318,15 +363,22 @@ contract LendingPool is ReentrancyGuard {
         //     IPosition(ILPRouter(router).addressPositions(msg.sender)).repayWithSelectedToken(borrowAmount, _token);
         // }
 
-        if (_chainId != block.chainid) {
-            bytes memory message =
-                abi.encode(userBorrowShares, totalBorrowShares, totalBorrowAssets, msg.sender, address(this), _chainId);
-            uint256[] memory _chainIds = new uint256[](1);
-            _chainIds[0] = _chainId;
-            ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
-                message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.RepayDebt
-            );
-        }
+        bytes memory message = abi.encode(
+            _shares,
+            userBorrowShares,
+            totalBorrowShares,
+            totalBorrowAssets,
+            chainIds,
+            msg.sender,
+            address(this),
+            _token,
+            _chainId
+        );
+        uint256[] memory _chainIds = new uint256[](1);
+        _chainIds[0] = _chainId;
+        ILendingPoolExecuteOrigin(IFactory(factory).executeOrigin()).execute{value: 0}(
+            message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.RepayDebt
+        );
 
         emit RepayWithCollateralByPosition(msg.sender, borrowAmount, _shares);
     }
@@ -361,7 +413,7 @@ contract LendingPool is ReentrancyGuard {
 
     function _findChainId(uint256 _chainId) internal view returns (uint256) {
         for (uint256 i = 0; i < chainIds.length; i++) {
-            if (chainIds[i] == _chainId) return i;
+            if (chainIds[i] == _chainId) return chainIds[i];
         }
         revert ChainIdNotFound();
     }

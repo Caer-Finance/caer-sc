@@ -266,16 +266,41 @@ contract LendingPoolRouter {
         return address(position);
     }
 
-    // function settlementWithdrawLiquidity(
-    //     address _user,
-    //     uint256 _userSupplyShares,
-    //     uint256 _totalSupplyShares,
-    //     uint256 _totalSupplyAssets
-    // ) public {
-    //     userSupplyShares[_user][block.chainid] = _userSupplyShares;
-    //     totalSupplyShares = _totalSupplyShares;
-    //     totalSupplyAssets = _totalSupplyAssets;
-    // }
+    function settlementWithdrawLiquidity(
+        address _user,
+        uint256 _chainId,
+        uint256 _userSupplyShares,
+        uint256 _totalSupplyShares,
+        uint256 _totalSupplyAssets
+    ) public {
+        userSupplyShares[_user][_chainId] = _userSupplyShares;
+        totalSupplyShares = _totalSupplyShares;
+        totalSupplyAssets = _totalSupplyAssets;
+    }
+
+    function settlementSupplyLiquidity(
+        uint256 _userSupplyShares,
+        uint256 _totalSupplyShares,
+        uint256 _totalSupplyAssets,
+        address _user,
+        uint256 _chainId
+    ) public {
+        userSupplyShares[_user][_chainId] = _userSupplyShares;
+        totalSupplyShares = _totalSupplyShares;
+        totalSupplyAssets = _totalSupplyAssets;
+    }
+
+    function settlementBorrowDebt(
+        address _user,
+        uint256 _chainId,
+        uint256 _userBorrowShares,
+        uint256 _totalBorrowShares,
+        uint256 _totalBorrowAssets
+    ) public {
+        userBorrowShares[_user][_chainId] = _userBorrowShares;
+        totalBorrowShares = _totalBorrowShares;
+        totalBorrowAssets = _totalBorrowAssets;
+    }
 
     function settlementBorrowDebtSuccess(
         uint256 _userBorrowShare,
@@ -297,6 +322,10 @@ contract LendingPoolRouter {
         userBorrowShares[_user][_chainId] = _userBorrowShare;
         totalBorrowShares = _totalBorrowShares;
         totalBorrowAssets = _totalBorrowAssets;
+    }
+
+    function settlementSupplyCollateral(uint256 _userCollateral, address _user, uint256 _chainId) public {
+        userCollateral[_user][_chainId] = _userCollateral;
     }
 
     function settlementWithdrawCollateral(uint256 _amount, address _user, uint256 _chainId) public {
