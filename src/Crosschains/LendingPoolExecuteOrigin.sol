@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ILendingPool} from "../Interfaces/ILendingPool.sol";
 import {IHelperTestnet} from "../Interfaces/IHelperTestnet.sol";
 import {IFactory} from "../Interfaces/IFactory.sol";
 import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
 import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
 import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
-import {ICreateLendingPoolBridgeRouter} from "../Interfaces/ICreateLendingPoolBridgeRouter.sol";
-import {ILPRouter} from "../Interfaces/ILPRouter.sol";
+import {IBridgeRouter} from "../Interfaces/IBridgeRouter.sol";
 
 contract LendingPoolExecuteOrigin is IMessageRecipient {
     error NotMailbox();
@@ -24,8 +22,6 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
         WithdrawLiquidity,
         SupplyLiquidity,
         BorrowDebt,
-        BorrowDebtRevert,
-        BorrowDebtSuccess,
         RepayDebt,
         SupplyCollateral,
         WithdrawCollateral
@@ -62,16 +58,15 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
 
     function _createLendingPool(bytes memory _message, uint256[] memory _chainIds) internal {
         address helperTestnet = IFactory(factory).helper();
+        IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
         for (uint256 i = 0; i < _chainIds.length; i++) {
             if (_chainIds[i] != 0 && _chainIds[i] != block.chainid) {
                 IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainIds[i]); // ** OTHER CHAIN
-                IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
                 bytes memory message = abi.encode(_message, address(0), ExecuteType.CreateLendingPool);
-
-                uint256 gasAmount =
-                    IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
-
-                address executeBridge = ICreateLendingPoolBridgeRouter(factory).executeBridges(_chainIds[i]);
+                // uint256 gasAmount =
+                //     IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
+                uint256 gasAmount = 0;
+                address executeBridge = IBridgeRouter(IFactory(factory).bridgeRouter()).executeBridges(_chainIds[i]);
                 if (executeBridge == address(0)) revert ExecuteBridgeNotSet();
                 bytes32 executeAddress = bytes32(uint256(uint160(executeBridge)));
                 IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(
@@ -87,16 +82,43 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
         (,,,,, address _lendingPoolOrigin, uint256[] memory _chainIds,) =
             abi.decode(_message, (uint256, uint256, uint256, uint256, address, address, uint256[], uint256));
         address helperTestnet = IFactory(factory).helper();
+        IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
         for (uint256 i = 0; i < _chainIds.length; i++) {
             if (_chainIds[i] != 0 && _chainIds[i] != block.chainid) {
-                IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
                 IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainIds[i]);
                 address lendingPoolDestination =
                     IFactory(factory).getPoolOtherChainsByChainId(_lendingPoolOrigin, _chainIds[i]);
                 bytes memory message = abi.encode(_message, lendingPoolDestination, ExecuteType.SupplyLiquidity);
-                uint256 gasAmount =
-                    IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
-                address executeBridge = ICreateLendingPoolBridgeRouter(factory).executeBridges(_chainIds[i]);
+                // uint256 gasAmount =
+                // IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
+                uint256 gasAmount = 0;
+                address executeBridge = IBridgeRouter(IFactory(factory).bridgeRouter()).executeBridges(_chainIds[i]);
+                if (executeBridge == address(0)) revert ExecuteBridgeNotSet();
+                bytes32 executeAddress = bytes32(uint256(uint160(executeBridge)));
+                IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(
+                    helperDestination.domainId, executeAddress, message
+                );
+                emit Execute(message);
+            }
+        }
+    }
+
+    function _withdrawLiquidity(bytes memory _message) internal {
+        address helperTestnet = IFactory(factory).helper();
+        (,,,,,, address _lendingPoolOrigin, uint256[] memory _chainIds,) =
+            abi.decode(_message, (uint256, uint256, uint256, uint256, uint256, address, address, uint256[], uint256));
+        IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
+        for (uint256 i = 0; i < _chainIds.length; i++) {
+            if (_chainIds[i] != 0 && _chainIds[i] != block.chainid) {
+                IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainIds[i]); // ** OTHER CHAIN
+                address lendingPoolDestination =
+                    IFactory(factory).getPoolOtherChainsByChainId(_lendingPoolOrigin, _chainIds[i]);
+                if (lendingPoolDestination == address(0)) revert LendingPoolNotSet();
+                bytes memory message = abi.encode(_message, lendingPoolDestination, ExecuteType.WithdrawLiquidity);
+                // uint256 gasAmount =
+                //     IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
+                uint256 gasAmount = 0;
+                address executeBridge = IBridgeRouter(IFactory(factory).bridgeRouter()).executeBridges(_chainIds[i]);
                 if (executeBridge == address(0)) revert ExecuteBridgeNotSet();
                 bytes32 executeAddress = bytes32(uint256(uint160(executeBridge)));
                 IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(
@@ -109,51 +131,22 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
 
     function _borrowDebt(bytes memory _message) internal {
         address helperTestnet = IFactory(factory).helper();
-        (,,,, uint256[] memory _chainIds,, address _lendingPoolOrigin,) =
-            abi.decode(_message, (uint256, uint256, uint256, uint256, uint256[], address, address, uint256));
+        (,,,,, address _lendingPoolOrigin, uint256[] memory _chainIds,) =
+            abi.decode(_message, (uint256, uint256, uint256, uint256, address, address, uint256[], uint256));
+        IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
         for (uint256 i = 0; i < _chainIds.length; i++) {
             if (_chainIds[i] != 0 && _chainIds[i] != block.chainid) {
                 IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainIds[i]); // ** OTHER CHAIN
-                IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
-
                 address lendingPoolDestination =
                     IFactory(factory).getPoolOtherChainsByChainId(_lendingPoolOrigin, _chainIds[i]);
                 bytes memory message = abi.encode(_message, lendingPoolDestination, ExecuteType.BorrowDebt);
-                uint256 gasAmount =
-                    IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
-                address executeBridge = ICreateLendingPoolBridgeRouter(factory).executeBridges(_chainIds[i]);
+                // uint256 gasAmount =
+                //     IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
+                uint256 gasAmount = 0;
+                address executeBridge = IBridgeRouter(IFactory(factory).bridgeRouter()).executeBridges(_chainIds[i]);
                 if (executeBridge == address(0)) revert ExecuteBridgeNotSet();
                 bytes32 executeAddress = bytes32(uint256(uint160(executeBridge)));
 
-                IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(
-                    helperDestination.domainId, executeAddress, message
-                );
-                emit Execute(message);
-            }
-        }
-    }
-
-    function _withdrawLiquidity(bytes memory _message) internal {
-        address helperTestnet = IFactory(factory).helper();
-        (,,,,,, uint256[] memory _chainIds, address _lendingPoolOrigin,) =
-            abi.decode(_message, (uint256, uint256, address, uint256, uint256, uint256, uint256[], address, uint256));
-        for (uint256 i = 0; i < _chainIds.length; i++) {
-            if (_chainIds[i] != 0 && _chainIds[i] != block.chainid) {
-                IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainIds[i]); // ** OTHER CHAIN
-                IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
-
-                address lendingPoolDestination =
-                    IFactory(factory).getPoolOtherChainsByChainId(_lendingPoolOrigin, _chainIds[i]);
-                if (lendingPoolDestination == address(0)) revert LendingPoolNotSet();
-
-                bytes memory message = abi.encode(_message, lendingPoolDestination, ExecuteType.WithdrawLiquidity);
-
-                uint256 gasAmount =
-                    IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
-                address executeBridge = ICreateLendingPoolBridgeRouter(factory).executeBridges(_chainIds[i]);
-                if (executeBridge == address(0)) revert ExecuteBridgeNotSet();
-
-                bytes32 executeAddress = bytes32(uint256(uint160(executeBridge)));
                 IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(
                     helperDestination.domainId, executeAddress, message
                 );
@@ -166,17 +159,18 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
         address helperTestnet = IFactory(factory).helper();
         (,,, address _lendingPoolOrigin, uint256[] memory _chainIds,) =
             abi.decode(_message, (uint256, uint256, address, address, uint256[], uint256));
+        IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
         for (uint256 i = 0; i < _chainIds.length; i++) {
             if (_chainIds[i] != 0 && _chainIds[i] != block.chainid) {
                 IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainIds[i]); // ** OTHER CHAIN
-                IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
                 address lendingPoolDestination =
                     IFactory(factory).getPoolOtherChainsByChainId(_lendingPoolOrigin, _chainIds[i]);
                 if (lendingPoolDestination == address(0)) revert LendingPoolNotSet();
                 bytes memory message = abi.encode(_message, lendingPoolDestination, ExecuteType.SupplyCollateral);
-                uint256 gasAmount =
-                    IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
-                address executeBridge = ICreateLendingPoolBridgeRouter(factory).executeBridges(_chainIds[i]);
+                // uint256 gasAmount =
+                //     IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
+                uint256 gasAmount = 0;
+                address executeBridge = IBridgeRouter(IFactory(factory).bridgeRouter()).executeBridges(_chainIds[i]);
                 if (executeBridge == address(0)) revert ExecuteBridgeNotSet();
                 bytes32 executeAddress = bytes32(uint256(uint160(executeBridge)));
                 IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(
@@ -189,22 +183,20 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
 
     function _withdrawCollateral(bytes memory _message) internal {
         address helperTestnet = IFactory(factory).helper();
-
-        (,, uint256[] memory _chainIds,, address _lendingPoolOrigin,) =
-            abi.decode(_message, (uint256, uint256, uint256[], address, address, uint256));
+        (,,, address _lendingPoolOrigin, uint256[] memory _chainIds,) =
+            abi.decode(_message, (uint256, uint256, address, address, uint256[], uint256));
+        IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
         for (uint256 i = 0; i < _chainIds.length; i++) {
             if (_chainIds[i] != 0 && _chainIds[i] != block.chainid) {
                 IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainIds[i]); // ** OTHER CHAIN
-                IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
                 address lendingPoolDestination =
                     IFactory(factory).getPoolOtherChainsByChainId(_lendingPoolOrigin, _chainIds[i]);
                 if (lendingPoolDestination == address(0)) revert LendingPoolNotSet();
-
                 bytes memory message = abi.encode(_message, lendingPoolDestination, ExecuteType.WithdrawCollateral);
-
-                uint256 gasAmount =
-                    IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
-                address executeBridge = ICreateLendingPoolBridgeRouter(factory).executeBridges(_chainIds[i]);
+                // uint256 gasAmount =
+                //     IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
+                uint256 gasAmount = 0;
+                address executeBridge = IBridgeRouter(IFactory(factory).bridgeRouter()).executeBridges(_chainIds[i]);
                 if (executeBridge == address(0)) revert ExecuteBridgeNotSet();
                 bytes32 executeAddress = bytes32(uint256(uint160(executeBridge)));
                 IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(
@@ -217,21 +209,20 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
 
     function _repayWithSelectedToken(bytes memory _message) internal {
         address helperTestnet = IFactory(factory).helper();
-        (,,,, uint256[] memory _chainIds,,, address _lendingPoolOrigin,) =
-            abi.decode(_message, (uint256, uint256, uint256, uint256, uint256[], address, address, address, uint256));
+        (,,,,, address _lendingPoolOrigin,, uint256[] memory _chainIds,) =
+            abi.decode(_message, (uint256, uint256, uint256, uint256, address, address, address, uint256[], uint256));
+        IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
         for (uint256 i = 0; i < _chainIds.length; i++) {
             if (_chainIds[i] != 0 && _chainIds[i] != block.chainid) {
                 IHelperTestnet.ChainInfo memory helperDestination = IHelperTestnet(helperTestnet).chains(_chainIds[i]); // ** OTHER CHAIN
-                IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
                 address lendingPoolDestination =
                     IFactory(factory).getPoolOtherChainsByChainId(_lendingPoolOrigin, _chainIds[i]);
                 if (lendingPoolDestination == address(0)) revert LendingPoolNotSet();
-
                 bytes memory message = abi.encode(_message, lendingPoolDestination, ExecuteType.RepayDebt);
-
-                uint256 gasAmount =
-                    IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
-                address executeBridge = ICreateLendingPoolBridgeRouter(factory).executeBridges(_chainIds[i]);
+                // uint256 gasAmount =
+                //     IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
+                uint256 gasAmount = 0;
+                address executeBridge = IBridgeRouter(IFactory(factory).bridgeRouter()).executeBridges(_chainIds[i]);
                 if (executeBridge == address(0)) revert ExecuteBridgeNotSet();
                 bytes32 executeAddress = bytes32(uint256(uint160(executeBridge)));
                 IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(
@@ -249,10 +240,6 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
             abi.decode(_messageBody, (bytes, address, ExecuteType));
         if (_executeType == ExecuteType.CreateLendingPool) {
             _handleCreateLendingPool(_message, uint256(_origin), _lendingPoolDestination);
-        } else if (_executeType == ExecuteType.WithdrawLiquidity) {
-            _handleWithdrawLiquidity(_message);
-        } else if (_executeType == ExecuteType.BorrowDebtSuccess) {
-            _handleBorrowDebtSuccess(_message, uint256(_origin));
         }
         emit ReceivedMessage(_origin, _sender, _messageBody);
     }
@@ -270,27 +257,6 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
         }
     }
 
-    function _handleWithdrawLiquidity(bytes memory _message) internal {
-        // (
-        //     ,
-        //     ,
-        //     address _user,
-        //     uint256 _userSupplyShares,
-        //     uint256 _totalSupplyShares,
-        //     uint256 _totalSupplyAssets,
-        //     address _lendingPoolOrigin
-        // ) = abi.decode(_message, (uint256, uint256, address, uint256, uint256, uint256, address));
-        // address router = ILendingPool(_lendingPoolOrigin).router();
-        // ILPRouter(router).settlementWithdrawLiquidity(_user, _userSupplyShares, _totalSupplyShares, _totalSupplyAssets);
-    }
-
-    function _handleBorrowDebtSuccess(bytes memory _message, uint256 _chainId) internal {
-        (uint256 _userBorrowShare, uint256 _totalBorrowShares, address _user, address _lendingPoolOrigin) =
-            abi.decode(_message, (uint256, uint256, address, address));
-        address router = ILendingPool(_lendingPoolOrigin).router();
-        ILPRouter(router).settlementBorrowDebtSuccess(_userBorrowShare, _totalBorrowShares, _chainId, _user);
-    }
-
     function _bridgeSetPoolOtherChains(IFactory.CrosschainPool[] memory _poolOtherChains) internal {
         address helperTestnet = IFactory(factory).helper();
         IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(helperTestnet).chains(block.chainid);
@@ -298,13 +264,12 @@ contract LendingPoolExecuteOrigin is IMessageRecipient {
             if (_poolOtherChains[i].chainId != block.chainid) {
                 IHelperTestnet.ChainInfo memory helperDestination =
                     IHelperTestnet(helperTestnet).chains(_poolOtherChains[i].chainId);
-
                 bytes memory message = abi.encode(_poolOtherChains[i].lendingPoolAddress, _poolOtherChains);
-
-                uint256 gasAmount =
-                    IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
+                // uint256 gasAmount =
+                //     IInterchainGasPaymaster(helperOrigin.gasMaster).quoteGasPayment(helperDestination.domainId, 0);
+                uint256 gasAmount = 0;
                 address configureBridge =
-                    ICreateLendingPoolBridgeRouter(factory).configureBridges(_poolOtherChains[i].chainId);
+                    IBridgeRouter(IFactory(factory).bridgeRouter()).configureBridges(_poolOtherChains[i].chainId);
                 if (configureBridge == address(0)) revert ConfigureBridgeNotSet();
                 bytes32 receiverConfigureBridgeAddress = bytes32(uint256(uint160(configureBridge)));
                 IMailbox(helperOrigin.mailbox).dispatch{value: gasAmount}(

@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import {ILPDeployer} from "../interfaces/ILPDeployer.sol";
 import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ILendingPoolExecuteOrigin} from "../interfaces/ILendingPoolExecuteOrigin.sol";
+import {IBridgeRouter} from "../interfaces/IBridgeRouter.sol";
+
 // import {IHelperTestnet} from "../interfaces/IHelperTestnet.sol";
 // import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
 
@@ -16,7 +18,6 @@ import {ILendingPoolExecuteOrigin} from "../interfaces/ILendingPoolExecuteOrigin
  * and cross-chain token senders.
  */
 contract LendingPoolFactory is Ownable {
-    error OnlyOwner();
     error PoolNotSet();
     /**
      * @notice Emitted when a new lending pool is created
@@ -160,9 +161,9 @@ contract LendingPoolFactory is Ownable {
         // ICreateLendingPoolOrigin(originBridge).createLendingPool{value: 0}(
         //     address(lendingPool), collateralToken, borrowToken, ltv, _chainIds
         // );
-        if (msg.sender != executeDestination) {
+        if (msg.sender != IBridgeRouter(bridgeRouter).receiverBridges(block.chainid)) {
             bytes memory message = abi.encode(address(lendingPool), collateralToken, borrowToken, ltv, _chainIds);
-            ILendingPoolExecuteOrigin(executeOrigin).execute{value: 0}(
+            ILendingPoolExecuteOrigin(IBridgeRouter(bridgeRouter).executeBridges(block.chainid)).execute{value: 0}(
                 message, _chainIds, ILendingPoolExecuteOrigin.ExecuteType.CreateLendingPool
             );
         }

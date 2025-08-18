@@ -19,8 +19,6 @@ contract LendingPoolExecuteDestination is IMessageRecipient, ReentrancyGuard {
         WithdrawLiquidity,
         SupplyLiquidity,
         BorrowDebt,
-        BorrowDebtRevert,
-        BorrowDebtSuccess,
         RepayDebt,
         SupplyCollateral,
         WithdrawCollateral
@@ -66,7 +64,6 @@ contract LendingPoolExecuteDestination is IMessageRecipient, ReentrancyGuard {
         (, address _collateralToken, address _borrowToken, uint256 _ltv, uint256[] memory _chainIds) =
             abi.decode(_message, (address, address, address, uint256, uint256[]));
         address lendingPool = IFactory(factory).createLendingPool(_collateralToken, _borrowToken, _ltv, _chainIds);
-
         IHelperTestnet.ChainInfo memory helperOrigin = IHelperTestnet(IFactory(factory).helper()).chains(block.chainid);
         IMailbox(helperOrigin.mailbox).dispatch{value: 0}(
             uint32(_origin), _sender, abi.encode(_message, lendingPool, ExecuteType.CreateLendingPool)
@@ -98,11 +95,11 @@ contract LendingPoolExecuteDestination is IMessageRecipient, ReentrancyGuard {
             uint256 _userBorrowShares,
             uint256 _totalBorrowShares,
             uint256 _totalBorrowAssets,
-            ,
             address _user,
             ,
+            ,
             uint256 _chainId
-        ) = abi.decode(_message, (uint256, uint256, uint256, uint256, uint256[], address, address, uint256));
+        ) = abi.decode(_message, (uint256, uint256, uint256, uint256, address, address, uint256[], uint256));
         ILPRouter(ILendingPool(_lendingPoolDestination).router()).settlementBorrowDebt(
             _userBorrowShares, _totalBorrowShares, _totalBorrowAssets, _user, _chainId
         );
@@ -115,21 +112,19 @@ contract LendingPoolExecuteDestination is IMessageRecipient, ReentrancyGuard {
         internal
         nonReentrant
     {
-        address router = ILendingPool(_lendingPoolDestination).router();
         (
             uint256 _amount,
             ,
-            address _user,
             uint256 _userSupplyShares,
             uint256 _totalSupplyShares,
             uint256 _totalSupplyAssets,
+            address _user,
             ,
             ,
             uint256 _chainId
-        ) = abi.decode(_message, (uint256, uint256, address, uint256, uint256, uint256, uint256[], address, uint256));
+        ) = abi.decode(_message, (uint256, uint256, uint256, uint256, uint256, address, address, uint256[], uint256));
         // TODO: if liquidity is not enough, back to origin chain
-
-        ILPRouter(router).settlementWithdrawLiquidity(
+        ILPRouter(ILendingPool(_lendingPoolDestination).router()).settlementWithdrawLiquidity(
             _user, _chainId, _userSupplyShares, _totalSupplyShares, _totalSupplyAssets
         );
         if (_chainId == block.chainid) {
@@ -163,12 +158,12 @@ contract LendingPoolExecuteDestination is IMessageRecipient, ReentrancyGuard {
             uint256 _userBorrowShare,
             uint256 _totalBorrowShares,
             uint256 _totalBorrowAssets,
-            ,
             address _user,
             address _lendingPoolOrigin,
             ,
+            ,
             uint256 _chainId
-        ) = abi.decode(_message, (uint256, uint256, uint256, uint256, uint256[], address, address, address, uint256));
+        ) = abi.decode(_message, (uint256, uint256, uint256, uint256, address, address, address, uint256[], uint256));
         ILPRouter(ILendingPool(_lendingPoolDestination).router()).settlementRepayDebt(
             _userBorrowShare, _totalBorrowShares, _totalBorrowAssets, _user, _lendingPoolOrigin, _chainId
         );

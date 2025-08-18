@@ -27,7 +27,7 @@ import {ICreateLendingPoolBridgeRouter} from "../src/Interfaces/ICreateLendingPo
 // import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
 import {ITokenSwap} from "../src/Interfaces/ITokenSwap.sol";
 import {ILendingPool} from "../src/Interfaces/ILendingPool.sol";
-import {ILPRouter} from "../src/Interfaces/ILPRouter.sol";
+// import {ILPRouter} from "../src/Interfaces/ILPRouter.sol";
 
 contract CaerTest is Test {
     IsHealthy public isHealthy;
