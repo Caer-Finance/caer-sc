@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ILendingPool} from "../Interfaces/ILendingPool.sol";
 import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
-import {IFactory} from "../interfaces/IFactory.sol";
-import {IHelperTestnet} from "../interfaces/IHelperTestnet.sol";
+import {IFactory} from "../Interfaces/IFactory.sol";
+import {IHelperTestnet} from "../Interfaces/IHelperTestnet.sol";
 import {ILPRouter} from "../Interfaces/ILPRouter.sol";
 import {IMailbox} from "@hyperlane-xyz/interfaces/IMailbox.sol";
 import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -70,10 +70,11 @@ contract LendingPoolExecuteDestination is IMessageRecipient, ReentrancyGuard {
         );
     }
 
+    // Fix LendingPoolExecuteDestination.sol _supplyLiquidity:
     function _supplyLiquidity(bytes memory _message, address _lendingPoolDestination) internal nonReentrant {
         (
-            ,
-            uint256 _userBorrowShares,
+            uint256 _amount,
+            uint256 _userSupplyShares,
             uint256 _totalSupplyShares,
             uint256 _totalSupplyAssets,
             address _user,
@@ -81,8 +82,9 @@ contract LendingPoolExecuteDestination is IMessageRecipient, ReentrancyGuard {
             ,
             uint256 _chainId
         ) = abi.decode(_message, (uint256, uint256, uint256, uint256, address, address, uint256[], uint256));
+
         ILPRouter(ILendingPool(_lendingPoolDestination).router()).settlementSupplyLiquidity(
-            _userBorrowShares, _totalSupplyShares, _totalSupplyAssets, _user, _chainId
+            _userSupplyShares, _totalSupplyShares, _totalSupplyAssets, _user, _chainId
         );
     }
 
@@ -133,16 +135,16 @@ contract LendingPoolExecuteDestination is IMessageRecipient, ReentrancyGuard {
     }
 
     function _supplyCollateral(bytes memory _message, address _lendingPoolDestination) internal nonReentrant {
-        (, uint256 _userCollateral, address _user,, uint256 _chainId) =
-            abi.decode(_message, (uint256, uint256, address, address, uint256));
+        (, uint256 _userCollateral, address _user,,, uint256 _chainId) =
+            abi.decode(_message, (uint256, uint256, address, address, uint256[], uint256));
         ILPRouter(ILendingPool(_lendingPoolDestination).router()).settlementSupplyCollateral(
             _userCollateral, _user, _chainId
         );
     }
 
     function _withdrawCollateral(bytes memory _message, address _lendingPoolDestination) internal nonReentrant {
-        (uint256 _userCollateral, uint256 _amount,, address _user,, uint256 _chainId) =
-            abi.decode(_message, (uint256, uint256, uint256[], address, address, uint256));
+        (uint256 _userCollateral, uint256 _amount, address _user,,, uint256 _chainId) =
+            abi.decode(_message, (uint256, uint256, address, address, uint256[], uint256));
         ILPRouter(ILendingPool(_lendingPoolDestination).router()).settlementWithdrawCollateral(
             _userCollateral, _user, _chainId
         );

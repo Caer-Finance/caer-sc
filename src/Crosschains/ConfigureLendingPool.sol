@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import {IMessageRecipient} from "@hyperlane-xyz/interfaces/IMessageRecipient.sol";
-import {IFactory} from "../interfaces/IFactory.sol";
-import {IHelperTestnet} from "../interfaces/IHelperTestnet.sol";
+import {IFactory} from "../Interfaces/IFactory.sol";
+import {IHelperTestnet} from "../Interfaces/IHelperTestnet.sol";
 
 contract ConfigureLendingPool is IMessageRecipient {
     error NotMailbox();

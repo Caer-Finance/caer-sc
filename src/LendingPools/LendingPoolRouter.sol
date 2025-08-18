@@ -291,11 +291,11 @@ contract LendingPoolRouter {
     }
 
     function settlementBorrowDebt(
-        address _user,
-        uint256 _chainId,
         uint256 _userBorrowShares,
         uint256 _totalBorrowShares,
-        uint256 _totalBorrowAssets
+        uint256 _totalBorrowAssets,
+        address _user,
+        uint256 _chainId
     ) public {
         userBorrowShares[_user][_chainId] = _userBorrowShares;
         totalBorrowShares = _totalBorrowShares;
@@ -317,6 +317,7 @@ contract LendingPoolRouter {
         uint256 _totalBorrowShares,
         uint256 _totalBorrowAssets,
         address _user,
+        address _lendingPoolOrigin,
         uint256 _chainId
     ) public {
         userBorrowShares[_user][_chainId] = _userBorrowShare;

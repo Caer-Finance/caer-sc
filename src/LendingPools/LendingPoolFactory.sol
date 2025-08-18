@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {ILPDeployer} from "../interfaces/ILPDeployer.sol";
+import {ILPDeployer} from "../Interfaces/ILPDeployer.sol";
 import {Ownable} from "@openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ILendingPoolExecuteOrigin} from "../interfaces/ILendingPoolExecuteOrigin.sol";
-import {IBridgeRouter} from "../interfaces/IBridgeRouter.sol";
+import {ILendingPoolExecuteOrigin} from "../Interfaces/ILendingPoolExecuteOrigin.sol";
+import {IBridgeRouter} from "../Interfaces/IBridgeRouter.sol";
 
 // import {IHelperTestnet} from "../interfaces/IHelperTestnet.sol";
 // import {IInterchainGasPaymaster} from "@hyperlane-xyz/interfaces/IInterchainGasPaymaster.sol";
@@ -176,6 +176,10 @@ contract LendingPoolFactory is Ownable {
         return pools.length;
     }
 
+    function poolCount() public view returns (uint256) {
+        return pools.length;
+    }
+
     // ****************** OWNER AREA ******************
     /**
      * @notice Adds a token data stream for price feeds and other data
@@ -218,15 +222,22 @@ contract LendingPoolFactory is Ownable {
     // ************************************************
 
     function setPoolOtherChains(address _originPool, uint256 _chainId, address _lendingPoolAddress) public {
-        if (poolOtherChains[_originPool].length == 0) {
-            poolOtherChains[_originPool].push(CrosschainPool(_chainId, _lendingPoolAddress));
-        } else {
-            for (uint256 i = 0; i < poolOtherChains[_originPool].length; i++) {
-                if (poolOtherChains[_originPool][i].chainId != _chainId) {
-                    poolOtherChains[_originPool].push(CrosschainPool(_chainId, _lendingPoolAddress));
-                }
+        // Check if chainId already exists
+        bool chainExists = false;
+        for (uint256 i = 0; i < poolOtherChains[_originPool].length; i++) {
+            if (poolOtherChains[_originPool][i].chainId == _chainId) {
+                // Update existing entry
+                poolOtherChains[_originPool][i].lendingPoolAddress = _lendingPoolAddress;
+                chainExists = true;
+                break;
             }
         }
+        
+        // If chainId doesn't exist, add new entry
+        if (!chainExists) {
+            poolOtherChains[_originPool].push(CrosschainPool(_chainId, _lendingPoolAddress));
+        }
+        
         emit PoolOtherChainsSet(_originPool, _chainId, _lendingPoolAddress);
     }
 

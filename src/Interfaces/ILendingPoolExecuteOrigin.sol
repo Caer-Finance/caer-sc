@@ -7,8 +7,6 @@ interface ILendingPoolExecuteOrigin {
         WithdrawLiquidity,
         SupplyLiquidity,
         BorrowDebt,
-        BorrowDebtRevert,
-        BorrowDebtSuccess,
         RepayDebt,
         SupplyCollateral,
         WithdrawCollateral

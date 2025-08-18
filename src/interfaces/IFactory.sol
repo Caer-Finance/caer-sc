@@ -18,11 +18,13 @@ interface IFactory {
     function lendingPoolRouterDeployer() external view returns (address);
     function protocol() external view returns (address);
     function helper() external view returns (address);
+    function tokenBridgeRouter() external view returns (address);
     function bridgeRouter() external view returns (address);
     function tokenDataStream(address _token) external view returns (address);
     function pools(uint256 _index) external view returns (Pool memory);
     function poolCount() external view returns (uint256);
     function poolOtherChains(address _originLendingPool) external view returns (CrosschainPool[] memory);
+    function lendingPoolInfo(address _lendingPool) external view returns (uint256);
     function getPoolLength() external view returns (uint256);
     function getPoolOtherChainsLength(address _originLendingPool) external view returns (uint256);
     function getPoolOtherChainsByChainId(address _originLendingPool, uint256 _chainId) external view returns (address);
@@ -39,6 +41,7 @@ interface IFactory {
     function updateIsHealthy(address _isHealthy) external;
     function updateProtocol(address _protocol) external;
     function updateHelper(address _helper) external;
+    function updateTokenBridgeRouter(address _tokenBridgeRouter) external;
     function updateBridgeRouter(address _bridgeRouter) external;
     function setPoolOtherChains(address _originLendingPool, uint256 _origin, address _destinationLendingPool)
         external;

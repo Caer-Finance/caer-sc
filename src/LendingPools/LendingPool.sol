@@ -110,7 +110,7 @@ contract LendingPool is ReentrancyGuard {
      * @custom:throws ZeroAmount if amount is 0.
      * @custom:emits SupplyLiquidity when liquidity is supplied.
      */
-    function supplyLiquidity(uint256 _amount, address _user) public nonReentrant updateInterest nonZero(_amount) {
+    function supplyLiquidity(uint256 _amount, uint256 _chainId, address _user) public nonReentrant updateInterest nonZero(_amount) {
         // TODO: only chainId==block.chainid could do this
         // address bridgeRouter = IFactory(factory).bridgeRouter();
         // if (
@@ -119,21 +119,22 @@ contract LendingPool is ReentrancyGuard {
         // ) {
         // }
 
-        uint256 shares = ILPRouter(router).supplyLiquidity(_amount, block.chainid, _user);
-        // if (_chainId == block.chainid) {
-        IERC20(ILPRouter(router).borrowToken()).safeTransferFrom(_user, address(this), _amount);
+        uint256 shares = ILPRouter(router).supplyLiquidity(_amount, _chainId, _user);
+        if (_chainId == block.chainid) {
+            IERC20(ILPRouter(router).borrowToken()).safeTransferFrom(_user, address(this), _amount);
+        }
         bytes memory message = abi.encode(
             _amount,
-            ILPRouter(router).userBorrowShares(_user, block.chainid),
+            ILPRouter(router).userBorrowShares(_user, _chainId),
             ILPRouter(router).totalSupplyShares(),
             ILPRouter(router).totalSupplyAssets(),
             _user,
             address(this),
             chainIds,
-            block.chainid
+            _chainId
         );
         uint256[] memory _chainIds = new uint256[](1);
-        _chainIds[0] = block.chainid;
+        _chainIds[0] = _chainId;
 
         ILendingPoolExecuteOrigin(IBridgeRouter(IFactory(factory).bridgeRouter()).executeBridges(block.chainid)).execute{
             value: 0

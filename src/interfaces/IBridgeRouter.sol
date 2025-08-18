@@ -19,4 +19,8 @@ interface IBridgeRouter {
     // ** WRITE
     function setBridgeTokenSender(address _token, uint256 _chainId, address _bridgeTokenSender) external;
     function setBridgeTokenReceiver(address _token, uint256 _chainId, address _bridgeTokenReceiver) external;
+    function setOriginBridge(uint256 _chainId, address _originBridge) external;
+    function setReceiverBridge(uint256 _chainId, address _receiverBridge) external;
+    function setConfiguredBridge(uint256 _chainId, address _configuredBridge) external;
+    function setExecuteBridge(uint256 _chainId, address _executeBridge) external;
 }
